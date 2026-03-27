@@ -1,46 +1,28 @@
-# 1ST0P — Solana launchpad (devnet)
+<p align="center">
+  <img src="docs/assets/1st0p-mark.svg" alt="1ST0P" width="168" />
+</p>
 
-This repo contains:
+<p align="center">
+  <a href="https://x.com/0xsquid_sol" title="Developer on X">
+    <img src="https://img.shields.io/badge/Developer%27s%20X-%E2%86%92-111111?style=for-the-badge&logo=x&logoColor=white" alt="Developer’s X →" />
+  </a>
+</p>
 
-- **`programs/1ST0P`** — Anchor program (crate **`onestop`**): permissionless token launches (**1 SOL** launch fee to treasury), **virtual + real SOL** constant-product bonding curve, **~1% (100 bps)** fee on **buys** (from SOL in) and **sells** (from SOL out).
-- **`web`** — Next.js UI (Phantom wallet, devnet RPC, Pulse list, launch form, coin page with buy/sell).
+# 1ST0P
 
-Rust identifiers cannot start with a digit, so the on-chain crate/module is named **`onestop`** while the product name is **1ST0P**.
+**Vision**
 
-## Prereqs
+1ST0P is being built as a **single home for serious Solana builders and the people who hire them**—a place where **discovery, credibility, and execution** meet on-chain.
 
-Install Solana CLI, Rust, and Anchor on your machine (needed to build and deploy the program). See [Anchor book](https://www.anchor-lang.com/docs/installation).
+**North-star goals**
 
-## Program (Anchor)
+- **A true one-stop hub for developer needs** — community, tooling context, planning, exposure, and collaboration, organized around real projects rather than anonymous tickers.
+- **A launchpad grounded in identity and intent** — teams are expected to be **doxxed**, complete a **structured interview**, and **present their product and roadmap** so participants understand who is shipping and where the work is headed.
+- **A marketplace for development talent** — service providers can **register**, build **reputation through rankings and verified reviews**, and be **hired through the platform**, with **funds held in treasury/escrow** until milestones or deliverables are satisfied.
+- **A safer venue for capital** — traders and supporters interact with **accountable teams and verifiable builders**, reducing reliance on anonymous launches and moving toward **investment in people and execution**, not just charts.
 
-```bash
-cd programs/1ST0P
-# After `anchor keys list`, set the same key in:
-# - programs/1ST0P/src/lib.rs declare_id!(...)
-# - Anchor.toml [programs.devnet]
-anchor build
-anchor deploy --provider.cluster devnet
-```
+**What this repository contains today**
 
-After deployment, copy the generated IDL to the app (recommended so types stay in sync), or update `web/src/idl/onestop.json` and set:
+This repo currently ships the **first vertical**: a **Solana program** (`programs/1ST0P`, crate **`onestop`**) implementing a **bonding-curve launchpad** (devnet-oriented), plus a **Next.js** frontend for wallet connection, initialization, launches, and trading against the curve. The broader platform vision above is **roadmap**; this codebase is the **launchpad foundation**.
 
-- Optional `web/.env.local`: `NEXT_PUBLIC_PROGRAM_ID=<your_program_id>` and, if you want a custom RPC, `NEXT_PUBLIC_RPC=<url>`.
-
-## Web app
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-Open the UI, connect Phantom on **Devnet**, fund the wallet with devnet SOL, then:
-
-1. **Initialize** once (admin wallet): sets treasury and fee bps (UI uses 100 = 1%).
-2. **Launch** tokens: costs **1 SOL** per launch (paid to treasury).
-3. **Trade** on the bonding curve from **Pulse** or a coin page.
-
-## Notes
-
-- The program ID in repo should match your deployment (`declare_id!` / `Anchor.toml` / `web` IDL default).
-- Always audit and test on devnet before any mainnet use. This is example software, not a security audit.
+Rust identifiers cannot start with a digit, so the on-chain crate and module are named **`onestop`** while the product name is **1ST0P**.
