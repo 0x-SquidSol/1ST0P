@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #131417;
+  --foreground: #f4f4f5;
+  --muted: #9ca3af;
+  --steel-1: #2f3238;
+  --steel-2: #4b5058;
+  --steel-3: #b6bbc4;
+  --paper: #f2f3f5;
+}
+
+body {
+  color: var(--foreground);
+  background: radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(182, 187, 196, 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 90% 0%,
+      rgba(75, 80, 88, 0.28),
+      transparent 55%
+  
+    ),
+    var(--background);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.wallet-btn {
+  background: linear-gradient(90deg, #d1d5db, #9ca3af) !important;
+  color: #09090b !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.wallet-btn:not([disabled]):hover {
+  filter: brightness(1.02);
+}
+
+/* Wallet Adapter (Phantom button) theme overrides */
+.wallet-adapter-button,
+.wallet-adapter-button-trigger {
+  background: linear-gradient(90deg, #d1d5db, #9ca3af) !important;
+  color: #09090b !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover,
+.wallet-adapter-button-trigger:not([disabled]):hover {
+  filter: brightness(1.03);
+}
+
+.wallet-adapter-button[disabled],
+.wallet-adapter-button-trigger[disabled] {
+  opacity: 0.6 !important;
+}
+
+.wallet-adapter-button .wallet-adapter-button-start-icon img,
+.wallet-adapter-button-trigger .wallet-adapter-button-start-icon img {
+  filter: grayscale(1) contrast(1.1) brightness(0.75);
+}
+
+.wallet-adapter-modal-wrapper {
+  background: rgba(10, 10, 12, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: #f4f4f5 !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f4f4f5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.brand-sign {
+  display: grid;
+  place-items: center;
+  border: 2px solid #111318;
+  background: var(--paper);
+  clip-path: polygon(
+    30% 0%,
+    70% 0%,
+    100% 30%,
+    100% 70%,
+    70% 100%,
+    30% 100%,
+    0% 70%,
+    0% 30%
+  );
+  box-shadow: 0 0 0 2px #3a3e46, 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.brand-sign-text {
+  font-family: var(--font-geist-mono), monospace;
+  letter-spacing: 0.08em;
+  color: #111318;
+}

@@ -1,0 +1,46 @@
+# --- Secrets & keys (never commit) ---
+*.pem
+*.key
+id.json
+keypair.json
+*-keypair.json
+**/*-keypair.json
+*.keystore
+.env
+.env.*
+!.env.example
+!.env*.example
+
+# --- Rust / Solana / Anchor ---
+/target/
+**/target/
+**/*.rs.bk
+.anchor/
+test-ledger/
+**/*.so
+
+# --- Node / frontend (root-level if you add tooling here) ---
+node_modules/
+.next/
+dist/
+out/
+build/
+coverage/
+.vercel
+
+# --- Logs & debug ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Editors ---
+.idea/
+*.swp
+*.swo
