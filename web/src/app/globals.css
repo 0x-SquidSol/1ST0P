@@ -12,6 +12,10 @@
   --paper: #f2f3f5;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   color: var(--foreground);
   background: radial-gradient(
@@ -28,6 +32,7 @@ body {
     var(--background);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .wallet-btn {

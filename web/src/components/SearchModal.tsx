@@ -44,7 +44,7 @@ export function SearchModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-[12vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-3 pt-[max(2.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:p-4 sm:pt-[12vh]"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -54,7 +54,7 @@ export function SearchModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-2xl rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl"
+        className="mb-4 w-full max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-bottom)-1.5rem))] max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:p-6"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">

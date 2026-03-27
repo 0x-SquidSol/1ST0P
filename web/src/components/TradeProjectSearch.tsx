@@ -65,7 +65,7 @@ export function TradeProjectSearch() {
   }, [normalized, rows, scope]);
 
   return (
-    <section className="space-y-4 rounded-3xl border border-white/10 bg-zinc-950/35 p-6">
+    <section className="space-y-4 rounded-3xl border border-white/10 bg-zinc-950/35 p-4 sm:p-6">
       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
         Project Search
       </p>
@@ -91,11 +91,11 @@ export function TradeProjectSearch() {
               href={`/coin/${row.mint}`}
               className="block rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 hover:border-white/20"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span>
+              <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <span className="min-w-0">
                   {row.name} <span className="text-zinc-400">${row.symbol}</span>
                 </span>
-                <span className="truncate font-mono text-xs text-zinc-500">
+                <span className="shrink-0 break-all font-mono text-[11px] text-zinc-500 sm:max-w-[50%] sm:truncate sm:text-xs">
                   {row.mint}
                 </span>
               </div>

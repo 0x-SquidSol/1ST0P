@@ -5,10 +5,15 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 
 export function WalletSummary() {
+  const [mounted, setMounted] = useState(false);
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,10 +34,10 @@ export function WalletSummary() {
     };
   }, [connection, publicKey]);
 
-  if (!connected || !publicKey) return null;
+  if (!mounted || !connected || !publicKey) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-300">
+    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-300">
       <span>{balance === null ? "— SOL" : `${balance.toFixed(3)} SOL`}</span>
       <button
         type="button"

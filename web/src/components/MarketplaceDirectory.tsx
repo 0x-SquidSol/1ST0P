@@ -38,7 +38,7 @@ export function MarketplaceDirectory() {
   );
 
   return (
-    <section className="space-y-4 rounded-3xl border border-white/10 bg-zinc-950/35 p-6">
+    <section className="space-y-4 rounded-3xl border border-white/10 bg-zinc-950/35 p-4 sm:p-6">
       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
         Service Search
       </p>

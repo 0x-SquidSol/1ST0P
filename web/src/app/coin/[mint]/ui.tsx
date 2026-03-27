@@ -72,16 +72,16 @@ export function CoinDetail({ mintStr }: { mintStr: string }) {
       >
         ← Back to pulse
       </Link>
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
         <div className="space-y-4 lg:col-span-3">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/50 p-8">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/50 p-5 sm:p-6 md:p-8">
             <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(242,243,245,0.20),rgba(75,80,88,0.00)_65%)] blur-2xl" />
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-white">{curve.name}</h1>
                 <p className="text-zinc-300">${curve.symbol}</p>
               </div>
-              <span className="rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1 text-xs font-medium text-zinc-300">
+              <span className="shrink-0 self-start rounded-full border border-white/10 bg-zinc-900/70 px-3 py-1 text-xs font-medium text-zinc-300 sm:self-auto">
                 bonding curve
               </span>
             </div>
@@ -98,7 +98,7 @@ export function CoinDetail({ mintStr }: { mintStr: string }) {
                 Metadata URI
               </a>
             ) : null}
-            <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+            <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-2xl border border-white/5 bg-zinc-900/60 p-4">
                 <dt className="text-[11px] uppercase tracking-wider text-zinc-500">
                   SOL in curve

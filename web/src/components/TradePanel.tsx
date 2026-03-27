@@ -296,7 +296,7 @@ export function TradePanel({
   ]);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 shadow-inner shadow-black/40">
+    <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 shadow-inner shadow-black/40 sm:p-5">
       <div className="flex gap-2 rounded-xl bg-zinc-900/80 p-1">
         <button
           type="button"
@@ -332,12 +332,14 @@ export function TradePanel({
               type="number"
               step="any"
               min="0"
-              className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-base text-zinc-100 sm:text-sm"
             />
           </label>
           <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3 text-xs text-zinc-400">
-            <div className="flex justify-between">
-              <span>Est. tokens (after 1% fee on input)</span>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-[11px] sm:text-xs">
+                Est. tokens (after 1% fee on input)
+              </span>
               <span className="font-mono text-zinc-200">
                 {quoteBuySide
                   ? fromRawTokens(quoteBuySide.tokensOut)
@@ -368,12 +370,14 @@ export function TradePanel({
               type="number"
               step="any"
               min="0"
-              className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-base text-zinc-100 sm:text-sm"
             />
           </label>
           <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3 text-xs text-zinc-400">
-            <div className="flex justify-between">
-              <span>Est. SOL out (after 1% fee on output)</span>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-[11px] sm:text-xs">
+                Est. SOL out (after 1% fee on output)
+              </span>
               <span className="font-mono text-zinc-200">
                 {quoteSellSide
                   ? (

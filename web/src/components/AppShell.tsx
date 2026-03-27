@@ -51,22 +51,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl min-w-0 px-3 py-6 sm:px-4 sm:py-8">
         {context ? (
-          <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="lg:sticky lg:top-24 lg:h-fit">
+          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+            <aside className="min-w-0 lg:sticky lg:top-24 lg:h-fit">
               <div className="rounded-2xl border border-white/10 bg-zinc-950/50 p-3">
                 <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                   {context.title} Context
                 </p>
-                <nav className="space-y-1">
+                <nav className="flex gap-1 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
                   {context.items.map((item) => {
                     const active = pathname === item.href;
                     return (
                       <Link
                         key={`${context.title}-${item.label}`}
                         href={item.href}
-                        className={`block rounded-lg px-3 py-2 text-sm transition ${
+                        className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition lg:w-full lg:whitespace-normal ${
                           active
                             ? "border border-white/15 bg-zinc-800/80 text-zinc-100"
                             : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-200"
@@ -86,15 +86,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </main>
       <footer className="mt-10 border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-sm text-zinc-400">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-3 py-8 text-sm text-zinc-400 sm:px-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="min-w-0 text-center sm:text-left">
               <p className="text-base font-semibold text-zinc-100">1ST0P</p>
               <p className="text-zinc-500">
                 Discovery, credibility, and execution on Solana.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-zinc-400">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-zinc-400 sm:justify-end sm:gap-4">
               <Link href="/docs" className="hover:text-zinc-200">
                 Docs
               </Link>

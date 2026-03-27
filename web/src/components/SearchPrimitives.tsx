@@ -17,7 +17,7 @@ export function SearchInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       autoFocus={autoFocus}
-      className="w-full rounded-xl border border-white/12 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-white/25"
+      className="w-full rounded-xl border border-white/12 bg-zinc-900/70 px-3 py-2 text-base text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-white/25 sm:text-sm"
     />
   );
 }
@@ -32,13 +32,13 @@ export function FilterPills<T extends string>({
   options: T[];
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] md:flex-wrap md:overflow-visible md:pb-0">
       {options.map((option) => (
         <button
           key={option}
           type="button"
           onClick={() => onChange(option)}
-          className={`rounded-lg border px-3 py-1.5 text-xs uppercase tracking-[0.14em] transition ${
+          className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs uppercase tracking-[0.14em] transition ${
             value === option
               ? "border-white/20 bg-zinc-800/80 text-zinc-100"
               : "border-white/10 bg-zinc-900/60 text-zinc-400 hover:border-white/20 hover:text-zinc-200"

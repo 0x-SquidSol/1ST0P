@@ -187,7 +187,7 @@ function Field({
         maxLength={max}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-white/25"
+        className="mt-1 w-full rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2 text-base text-zinc-100 outline-none focus:border-white/25 sm:text-sm"
       />
     </label>
   );
