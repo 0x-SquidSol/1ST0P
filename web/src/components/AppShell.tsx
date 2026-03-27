@@ -95,11 +95,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-zinc-400">
-              <Link href="/" className="hover:text-zinc-200">
+              <Link href="/docs" className="hover:text-zinc-200">
                 Docs
               </Link>
-              <Link href="/" className="hover:text-zinc-200">
+              <Link href="/vision" className="hover:text-zinc-200">
                 Vision
+              </Link>
+              <Link href="/contact" className="hover:text-zinc-200">
+                Contact
               </Link>
               <a
                 href="https://x.com/0xsquid_sol"
@@ -109,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 X
               </a>
-              <Link href="/" className="hover:text-zinc-200">
+              <Link href="/status" className="hover:text-zinc-200">
                 Status
               </Link>
             </div>
