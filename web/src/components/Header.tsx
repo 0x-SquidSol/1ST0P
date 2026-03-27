@@ -17,7 +17,7 @@ export function Header() {
     { label: "Home", href: "/" },
     { label: "Launch", href: "/launch" },
     { label: "Marketplace", href: "/marketplace" },
-    { label: "Traders", href: "/traders" },
+    { label: "Trade", href: "/traders" },
   ];
 
   return (

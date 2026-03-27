@@ -12,7 +12,7 @@ type NavItem = {
 const CONTEXT_MAP: Array<{ match: RegExp; title: string; items: NavItem[] }> = [
   {
     match: /^\/(coin\/|traders|traders\/)/,
-    title: "Trader",
+    title: "Trade",
     items: [
       { label: "Pulse", href: "/" },
       { label: "Watchlist", href: "/traders" },
