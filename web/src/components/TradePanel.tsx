@@ -8,6 +8,7 @@ import { SystemProgram, PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TxStatus, type TxStatusState } from "@/components/TxStatus";
 import {
   fetchBondingCurveState,
   fetchGlobalConfigState,
@@ -59,6 +60,7 @@ export function TradePanel({
   const [tokenIn, setTokenIn] = useState("1000");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [txStatus, setTxStatus] = useState<TxStatusState>({ phase: "idle" });
 
   const curvePda = useMemo(() => bondingCurvePda(mint), [mint]);
 
@@ -116,22 +118,27 @@ export function TradePanel({
 
   const execBuy = useCallback(async () => {
     setErr(null);
+    setTxStatus({ phase: "preparing", message: "Preparing buy transaction..." });
     if (!wallet.publicKey || !wallet.signTransaction) {
       setErr("Connect wallet.");
+      setTxStatus({ phase: "failed", message: "Connect wallet." });
       return;
     }
     const g = await fetchGlobalConfigState(connection);
     if (!g) {
       setErr("Global config missing.");
+      setTxStatus({ phase: "failed", message: "Global config missing." });
       return;
     }
     const lamports = Math.floor(Number(solIn || "0") * LAMPORTS_PER_SOL);
     if (!(lamports > 0)) {
       setErr("Enter SOL amount.");
+      setTxStatus({ phase: "failed", message: "Enter SOL amount." });
       return;
     }
     if (!quoteBuySide) {
       setErr("No quote.");
+      setTxStatus({ phase: "failed", message: "No quote available." });
       return;
     }
     const minOut =
@@ -174,10 +181,22 @@ export function TradePanel({
           ),
         ])
         .rpc();
+      setTxStatus({
+        phase: "submitted",
+        message: "Buy submitted. Waiting for confirmation...",
+        signature: sig,
+      });
       await connection.confirmTransaction(sig, "confirmed");
+      setTxStatus({
+        phase: "confirmed",
+        message: "Buy confirmed.",
+        signature: sig,
+      });
       await refresh();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Buy failed");
+      const msg = e instanceof Error ? e.message : "Buy failed";
+      setErr(msg);
+      setTxStatus({ phase: "failed", message: msg });
     } finally {
       setBusy(false);
     }
@@ -185,22 +204,27 @@ export function TradePanel({
 
   const execSell = useCallback(async () => {
     setErr(null);
+    setTxStatus({ phase: "preparing", message: "Preparing sell transaction..." });
     if (!wallet.publicKey || !wallet.signTransaction) {
       setErr("Connect wallet.");
+      setTxStatus({ phase: "failed", message: "Connect wallet." });
       return;
     }
     const g = await fetchGlobalConfigState(connection);
     if (!g) {
       setErr("Global config missing.");
+      setTxStatus({ phase: "failed", message: "Global config missing." });
       return;
     }
     const raw = toRawTokens(Number(tokenIn || "0"));
     if (raw <= BigInt(0)) {
       setErr("Enter token amount.");
+      setTxStatus({ phase: "failed", message: "Enter token amount." });
       return;
     }
     if (!quoteSellSide) {
       setErr("No quote.");
+      setTxStatus({ phase: "failed", message: "No quote available." });
       return;
     }
     const minSol =
@@ -243,10 +267,22 @@ export function TradePanel({
           ),
         ])
         .rpc();
+      setTxStatus({
+        phase: "submitted",
+        message: "Sell submitted. Waiting for confirmation...",
+        signature: sig,
+      });
       await connection.confirmTransaction(sig, "confirmed");
+      setTxStatus({
+        phase: "confirmed",
+        message: "Sell confirmed.",
+        signature: sig,
+      });
       await refresh();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Sell failed");
+      const msg = e instanceof Error ? e.message : "Sell failed";
+      setErr(msg);
+      setTxStatus({ phase: "failed", message: msg });
     } finally {
       setBusy(false);
     }
@@ -359,6 +395,7 @@ export function TradePanel({
       )}
 
       {err ? <p className="mt-3 text-xs text-red-400">{err}</p> : null}
+      <TxStatus status={txStatus} compact />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { WalletSummary } from "@/components/WalletSummary";
 
 const WalletMultiButton = dynamic(
   async () =>
@@ -62,7 +63,10 @@ export function Header() {
             Search
           </button>
         </nav>
-        <WalletMultiButton className="wallet-btn" />
+        <div className="flex items-center gap-2">
+          <WalletSummary />
+          <WalletMultiButton className="wallet-btn" />
+        </div>
       </div>
     </header>
   );

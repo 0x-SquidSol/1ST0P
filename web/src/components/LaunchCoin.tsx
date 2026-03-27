@@ -13,6 +13,7 @@ import {
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useCallback, useEffect, useState } from "react";
 import { fetchGlobalConfigState } from "@/lib/accounts";
+import { TxStatus, type TxStatusState } from "@/components/TxStatus";
 import { LAUNCH_FEE_SOL } from "@/lib/constants";
 import { bondingCurvePda, globalConfigPda } from "@/lib/pdas";
 import { programFor } from "@/lib/program";
@@ -26,6 +27,7 @@ export function LaunchCoin({ onCreated }: { onCreated?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [txStatus, setTxStatus] = useState<TxStatusState>({ phase: "idle" });
 
   useEffect(() => {
     void (async () => {
@@ -36,17 +38,21 @@ export function LaunchCoin({ onCreated }: { onCreated?: () => void }) {
 
   const run = useCallback(async () => {
     setErr(null);
+    setTxStatus({ phase: "preparing", message: "Preparing transaction..." });
     if (!wallet.publicKey || !wallet.signTransaction) {
       setErr("Connect wallet first.");
+      setTxStatus({ phase: "failed", message: "Connect wallet first." });
       return;
     }
     if (!name.trim() || !symbol.trim()) {
       setErr("Name and symbol required.");
+      setTxStatus({ phase: "failed", message: "Name and symbol required." });
       return;
     }
     const g = await fetchGlobalConfigState(connection);
     if (!g) {
       setErr("Launchpad not initialized yet.");
+      setTxStatus({ phase: "failed", message: "Launchpad not initialized yet." });
       return;
     }
 
@@ -77,14 +83,25 @@ export function LaunchCoin({ onCreated }: { onCreated?: () => void }) {
         })
         .signers([mint])
         .rpc();
-
+      setTxStatus({
+        phase: "submitted",
+        message: "Transaction submitted. Waiting for confirmation...",
+        signature: sig,
+      });
       await connection.confirmTransaction(sig, "confirmed");
+      setTxStatus({
+        phase: "confirmed",
+        message: "Launch confirmed on chain.",
+        signature: sig,
+      });
       onCreated?.();
       setName("");
       setSymbol("");
       setUri("");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Launch failed");
+      const msg = e instanceof Error ? e.message : "Launch failed";
+      setErr(msg);
+      setTxStatus({ phase: "failed", message: msg });
     } finally {
       setBusy(false);
     }
@@ -136,6 +153,7 @@ export function LaunchCoin({ onCreated }: { onCreated?: () => void }) {
         />
       </div>
       {err ? <p className="text-xs text-red-400">{err}</p> : null}
+      <TxStatus status={txStatus} />
       <button
         type="button"
         disabled={busy}
