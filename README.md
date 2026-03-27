@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/1st0p-mark.png" alt="1ST0P" width="168" />
+  <img src="./docs/assets/1st0p-mark.png" alt="1ST0P" width="168" />
 </p>
 
 <p align="center">
