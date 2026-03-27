@@ -12,26 +12,29 @@ const personaPaths = [
   {
     title: "Launch a Token",
     description:
-      "For serious teams ready to apply, pass review, and launch with clear accountability.",
-    trust: "Manual review + formal interview before approval",
+      "Apply to launch on 1ST0P with a real team, real roadmap, and real accountability.",
+    trust: "Manual review + formal interview + launch plan",
     href: "/launch",
     cta: "Apply to Launch",
+    next: "Next: submit your team and project application",
   },
   {
     title: "Hire Services",
     description:
-      "Find vetted providers across development, design, raids, moderation, and community operations.",
-    trust: "Escrow custody and milestone-based releases",
+      "Hire across development, design, raids, moderation, and community ops with escrow protection.",
+    trust: "Escrow custody + milestone/timeboxed releases",
     href: "/marketplace",
     cta: "View Services",
+    next: "Next: browse approved providers and listings",
   },
   {
     title: "Offer Services",
     description:
-      "Apply as a provider to build reputation through completed work and verified buyer feedback.",
-    trust: "Manual provider approval before public listing",
+      "Apply to list your services and build reputation through verified delivery and buyer feedback.",
+    trust: "Manual approval + mandatory buyer reviews at closeout",
     href: "/marketplace",
     cta: "Apply as Provider",
+    next: "Next: submit provider application for review",
   },
   {
     title: "Discover & Trade Projects",
@@ -40,6 +43,7 @@ const personaPaths = [
     trust: "Verification context shown alongside project status",
     href: "/traders",
     cta: "View Projects",
+    next: "Next: filter by presale/live status and credibility",
   },
 ];
 
@@ -110,14 +114,15 @@ export default function HomePage() {
           {personaPaths.map((path) => (
             <div
               key={path.title}
-              className="rounded-2xl border border-white/10 bg-zinc-950/40 p-6"
+              className="flex min-h-[210px] flex-col rounded-2xl border border-white/10 bg-zinc-950/40 p-6"
             >
               <h3 className="text-lg font-semibold text-zinc-100">{path.title}</h3>
               <p className="mt-2 text-sm text-zinc-400">{path.description}</p>
               <p className="mt-3 text-xs text-zinc-500">{path.trust}</p>
+              <p className="mt-2 text-xs text-zinc-600">{path.next}</p>
               <Link
                 href={path.href}
-                className="mt-5 inline-flex rounded-lg border border-white/15 bg-zinc-900/80 px-4 py-2 text-sm text-zinc-200 transition hover:border-white/25 hover:text-white"
+                className="mt-auto inline-flex w-fit rounded-lg border border-white/15 bg-zinc-900/80 px-4 py-2 text-sm text-zinc-200 transition hover:border-white/25 hover:text-white"
               >
                 {path.cta}
               </Link>
