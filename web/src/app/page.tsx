@@ -68,11 +68,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      <footer className="border-t border-white/5 pt-10 text-center text-xs text-zinc-600">
-        1ST0P — experimental software on Solana devnet. Override the program id
-        with <code className="text-zinc-500">NEXT_PUBLIC_PROGRAM_ID</code> if you
-        redeploy. Not financial advice.
-      </footer>
     </div>
   );
 }

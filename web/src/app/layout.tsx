@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Header } from "@/components/Header";
+import { AppShell } from "@/components/AppShell";
 import { WalletProviders } from "@/components/WalletProviders";
 import "./globals.css";
 
@@ -31,8 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <WalletProviders>
-          <Header />
-          <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>
+          <AppShell>{children}</AppShell>
         </WalletProviders>
       </body>
     </html>
