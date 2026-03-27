@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CoinPulse } from "@/components/CoinPulse";
 import { InitializeLaunchpad } from "@/components/InitializeLaunchpad";
 import { LaunchCoin } from "@/components/LaunchCoin";
+import { PageHeader } from "@/components/PageHeader";
 import { fetchGlobalConfigState } from "@/lib/accounts";
 
 const personaPaths = [
@@ -96,20 +97,11 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-              Entry Paths
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-zinc-100">
-              Choose your 1ST0P lane
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm text-zinc-400">
-            Every lane is built around accountability, clear process, and
-            discoverable execution.
-          </p>
-        </div>
+        <PageHeader
+          label="Entry Paths"
+          title="Choose your 1ST0P lane"
+          description="Every lane is built around accountability, clear process, and discoverable execution."
+        />
         <div className="grid gap-4 md:grid-cols-2">
           {personaPaths.map((path) => (
             <div
