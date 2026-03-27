@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { TradeProjectSearch } from "@/components/TradeProjectSearch";
 
 export default function TradersPage() {
   return (
@@ -10,6 +11,7 @@ export default function TradersPage() {
           description="Track launches, scan movement, and review market context in one clean workspace. Watchlists and alerts are scheduled for later phases."
         />
       </section>
+      <TradeProjectSearch />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { MarketplaceDirectory } from "@/components/MarketplaceDirectory";
 
 export default function MarketplacePage() {
   return (
@@ -10,6 +11,7 @@ export default function MarketplacePage() {
           description="Browse approved providers and services with escrow-first expectations, clear milestones, and mandatory closeout feedback to keep quality high."
         />
       </section>
+      <MarketplaceDirectory />
     </div>
   );
 }
