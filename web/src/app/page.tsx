@@ -7,6 +7,7 @@ import { CoinPulse } from "@/components/CoinPulse";
 import { InitializeLaunchpad } from "@/components/InitializeLaunchpad";
 import { LaunchCoin } from "@/components/LaunchCoin";
 import { PageHeader } from "@/components/PageHeader";
+import { StateEmpty, StateLoading } from "@/components/StateCards";
 import { fetchGlobalConfigState } from "@/lib/accounts";
 
 const personaPaths = [
@@ -143,8 +144,22 @@ export default function HomePage() {
         </div>
       </section>
 
+      {globalReady === null ? (
+        <StateLoading
+          title="Checking Launchpad State"
+          description="We are verifying whether launch configuration is already initialized."
+        />
+      ) : null}
+
       {globalReady === false ? (
         <InitializeLaunchpad onInitialized={() => void refreshGlobal()} />
+      ) : null}
+
+      {globalReady === true ? (
+        <StateEmpty
+          title="Launchpad Ready"
+          description="Configuration is initialized. Use the launch and pulse modules below to create and monitor tokens."
+        />
       ) : null}
 
       <div className="grid gap-10 rounded-3xl border border-white/10 bg-zinc-950/40 p-8 lg:grid-cols-5">

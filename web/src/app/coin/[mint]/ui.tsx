@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
+import { StateError, StateLoading } from "@/components/StateCards";
 import { TradePanel } from "@/components/TradePanel";
 import {
   fetchBondingCurveState,
@@ -47,14 +48,20 @@ export function CoinDetail({ mintStr }: { mintStr: string }) {
 
   if (bad) {
     return (
-      <p className="text-zinc-400">
-        Coin not found for this mint on this program.
-      </p>
+      <StateError
+        title="Coin Not Found"
+        description="No bonding-curve account was found for this mint on the current program."
+      />
     );
   }
 
   if (!curve) {
-    return <p className="text-zinc-500">Loading orbit…</p>;
+    return (
+      <StateLoading
+        title="Loading Coin Orbit"
+        description="Fetching curve data, fee settings, and live SOL state."
+      />
+    );
   }
 
   return (
