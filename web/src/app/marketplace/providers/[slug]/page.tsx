@@ -41,7 +41,7 @@ export default async function ProviderProfilePage({ params }: Props) {
           profiles appear in the sample directory.
         </p>
         <Link
-          href="/marketplace#sample-providers"
+          href="/marketplace?tab=profiles"
           className="inline-block text-sm text-zinc-300 underline decoration-white/20 underline-offset-4 hover:text-zinc-100"
         >
           Return to marketplace

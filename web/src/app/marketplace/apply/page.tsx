@@ -12,7 +12,7 @@ export default function MarketplaceApplyPage() {
         />
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
-            href="/marketplace#how-it-works"
+            href="/marketplace?tab=how"
             className="polish-cta-link inline-flex w-fit rounded-lg bg-zinc-900/85 px-4 py-2 text-sm text-zinc-100"
           >
             Read how hiring works

@@ -22,7 +22,7 @@ const SERVICES = [
   { name: "X Moderators", group: "Community" as Scope },
 ];
 
-export function MarketplaceDirectory() {
+export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean }) {
   const params = useSearchParams();
   const searchFieldId = useId();
   const seedQuery = params.get("service") ?? "";
@@ -39,10 +39,19 @@ export function MarketplaceDirectory() {
   );
 
   return (
-    <section className="polish-surface-subtle max-w-full min-w-0 space-y-4 rounded-3xl bg-zinc-950/38 p-4 sm:p-6">
-      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-        Service Search
-      </p>
+    <section
+      className={`polish-surface-subtle max-w-full min-w-0 space-y-4 bg-zinc-950/38 p-4 sm:p-6 ${
+        embedded ? "rounded-2xl" : "rounded-3xl"
+      }`}
+    >
+      {!embedded && (
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+          Service Search
+        </p>
+      )}
+      {embedded && (
+        <h2 className="text-sm font-medium text-zinc-200">Browse services</h2>
+      )}
       <label htmlFor={searchFieldId} className="sr-only">
         Search marketplace service categories
       </label>
