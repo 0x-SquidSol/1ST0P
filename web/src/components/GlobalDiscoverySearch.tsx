@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { fetchAllBondingCurves } from "@/lib/accounts";
 import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
 
@@ -44,6 +44,7 @@ export function DiscoverySearchContent({
   className?: string;
 }) {
   const { connection } = useConnection();
+  const searchFieldId = useId();
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<Scope>("Projects");
   const [projects, setProjects] = useState<ProjectRow[]>([]);
@@ -106,17 +107,23 @@ export function DiscoverySearchContent({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      <label htmlFor={searchFieldId} className="sr-only">
+        Search by contract address, name, ticker, service, or site section
+      </label>
       <SearchInput
+        id={searchFieldId}
         value={query}
         onChange={setQuery}
         placeholder={placeholder}
         autoFocus={autoFocus}
       />
-      <FilterPills
-        value={scope}
-        onChange={setScope}
-        options={["Projects", "Services", "Sections"]}
-      />
+      <div role="group" aria-label="Search scope">
+        <FilterPills
+          value={scope}
+          onChange={setScope}
+          options={["Projects", "Services", "Sections"]}
+        />
+      </div>
 
       {scope === "Projects" ? (
         <div className="space-y-2">

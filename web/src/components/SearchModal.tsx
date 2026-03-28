@@ -51,6 +51,7 @@ export function SearchModal({
       }}
     >
       <div
+        id="global-search-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -58,13 +59,17 @@ export function SearchModal({
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
-          <p id={titleId} className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+          <h2
+            id={titleId}
+            className="text-xs font-normal uppercase tracking-[0.2em] text-zinc-500"
+          >
             Search
-          </p>
+          </h2>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-400 transition hover:border-white/20 hover:text-zinc-100"
+            aria-label="Close search"
           >
             Close
           </button>

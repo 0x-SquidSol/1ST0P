@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
 
 type Scope = "All" | "Development" | "Growth" | "Community";
@@ -24,6 +24,7 @@ const SERVICES = [
 
 export function MarketplaceDirectory() {
   const params = useSearchParams();
+  const searchFieldId = useId();
   const seedQuery = params.get("service") ?? "";
   const [query, setQuery] = useState(seedQuery);
   const [scope, setScope] = useState<Scope>("All");
@@ -42,16 +43,22 @@ export function MarketplaceDirectory() {
       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
         Service Search
       </p>
+      <label htmlFor={searchFieldId} className="sr-only">
+        Search marketplace service categories
+      </label>
       <SearchInput
+        id={searchFieldId}
         value={query}
         onChange={setQuery}
         placeholder="Search service types (e.g. Front End Developers, KOL Managers)"
       />
-      <FilterPills
-        value={scope}
-        onChange={setScope}
-        options={["All", "Development", "Growth", "Community"]}
-      />
+      <div role="group" aria-label="Service category filters">
+        <FilterPills
+          value={scope}
+          onChange={setScope}
+          options={["All", "Development", "Growth", "Community"]}
+        />
+      </div>
       <div className="grid gap-2 md:grid-cols-2">
         {filtered.length === 0 ? (
           <p className="text-xs text-zinc-500">No matching service categories.</p>

@@ -12,7 +12,7 @@ export function PageHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-3">
+    <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-3">
       <div className="min-w-0">
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
           {label}
@@ -27,7 +27,7 @@ export function PageHeader({
         ) : null}
         {right}
       </div>
-    </div>
+    </header>
   );
 }
 

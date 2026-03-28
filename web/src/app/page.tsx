@@ -68,7 +68,10 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(184,191,201,0.16),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(62,67,76,0.35),transparent_45%)]" />
         <div className="relative max-w-2xl space-y-5 sm:space-y-6">
           <p className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-white/20 bg-zinc-800/60 px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-zinc-300 sm:text-xs">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-300" />
+            <span
+              className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-300"
+              aria-hidden
+            />
             1st0p devnet flight deck
           </p>
           <div className="brand-sign h-24 w-24">

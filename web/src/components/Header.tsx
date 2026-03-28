@@ -30,10 +30,14 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl" aria-label="Site header">
       <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-4 sm:py-4">
         <div className="min-w-0 shrink-0">
-          <Link href="/" className="group flex items-center gap-2">
+          <Link
+            href="/"
+            className="group flex items-center gap-2"
+            aria-label="1ST0P home"
+          >
             <span className="brand-sign h-9 w-9 shrink-0 sm:h-10 sm:w-10">
               <span className="brand-sign-text text-[10px] font-black">1ST0P</span>
             </span>
@@ -47,7 +51,10 @@ export function Header() {
             </div>
           </Link>
         </div>
-        <nav className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm sm:flex md:gap-2">
+        <nav
+          className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm sm:flex md:gap-2"
+          aria-label="Primary navigation"
+        >
           {navItems.map((item) => {
             const active =
               pathname === item.href ||
@@ -56,6 +63,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={`shrink-0 rounded-lg px-3 py-2 transition ${
                   active
                     ? "bg-zinc-800/70 text-zinc-100"
@@ -70,6 +78,9 @@ export function Header() {
             type="button"
             onClick={() => setSearchOpen(true)}
             className="shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-300 transition hover:text-zinc-100"
+            aria-expanded={searchOpen}
+            aria-controls="global-search-dialog"
+            aria-haspopup="dialog"
           >
             Search
           </button>
@@ -78,6 +89,9 @@ export function Header() {
           type="button"
           onClick={() => setSearchOpen(true)}
           className="shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2.5 text-sm text-zinc-300 transition hover:text-zinc-100 sm:hidden"
+          aria-expanded={searchOpen}
+          aria-controls="global-search-dialog"
+          aria-haspopup="dialog"
         >
           Search
         </button>
@@ -88,7 +102,9 @@ export function Header() {
           ) : (
             <div
               className="wallet-btn h-10 min-w-[120px] rounded-xl border border-white/16 bg-zinc-900/90 sm:min-w-[148px]"
-              aria-hidden
+              role="status"
+              aria-live="polite"
+              aria-label="Loading wallet controls"
             />
           )}
         </div>

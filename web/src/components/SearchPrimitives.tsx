@@ -5,14 +5,17 @@ export function SearchInput({
   onChange,
   placeholder,
   autoFocus,
+  id,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   autoFocus?: boolean;
+  id?: string;
 }) {
   return (
     <input
+      id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

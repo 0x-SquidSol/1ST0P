@@ -50,22 +50,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <Header />
-      <main className="mx-auto max-w-6xl min-w-0 px-3 py-6 sm:px-4 sm:py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto max-w-6xl min-w-0 px-3 py-6 sm:px-4 sm:py-8"
+      >
         {context ? (
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
-            <aside className="min-w-0 lg:sticky lg:top-24 lg:h-fit">
+            <aside className="min-w-0 lg:sticky lg:top-24 lg:h-fit" aria-label={`${context.title} section`}>
               <div className="rounded-2xl border border-white/10 bg-zinc-950/50 p-3">
                 <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                   {context.title} Context
                 </p>
-                <nav className="flex gap-1 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+                <nav
+                  className="flex gap-1 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0"
+                  aria-label={`${context.title} shortcuts`}
+                >
                   {context.items.map((item) => {
                     const active = pathname === item.href;
                     return (
                       <Link
                         key={`${context.title}-${item.label}`}
                         href={item.href}
+                        aria-current={active ? "page" : undefined}
                         className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition lg:w-full lg:whitespace-normal ${
                           active
                             ? "border border-white/15 bg-zinc-800/80 text-zinc-100"
@@ -85,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           children
         )}
       </main>
-      <footer className="mt-10 border-t border-white/10">
+      <footer className="mt-10 border-t border-white/10" aria-label="Site footer">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-3 py-8 text-sm text-zinc-400 sm:px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="min-w-0 text-center sm:text-left">
@@ -94,7 +105,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Discovery, credibility, and execution on Solana.
               </p>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-3 text-zinc-400 sm:justify-end sm:gap-4">
+            <nav
+              className="flex flex-wrap items-center justify-center gap-3 text-zinc-400 sm:justify-end sm:gap-4"
+              aria-label="Footer navigation"
+            >
               <Link href="/docs" className="hover:text-zinc-200">
                 Docs
               </Link>
@@ -109,15 +123,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-zinc-200"
+                aria-label="1ST0P on X (opens in new tab)"
               >
                 X
               </a>
               <Link href="/status" className="hover:text-zinc-200">
                 Status
               </Link>
-            </div>
+            </nav>
           </div>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-zinc-500">
             1ST0P is experimental software on Solana devnet. Override{" "}
             <code className="text-zinc-500">NEXT_PUBLIC_PROGRAM_ID</code> if you
             redeploy. Not financial advice.

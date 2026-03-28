@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { fetchAllBondingCurves } from "@/lib/accounts";
 import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
 
@@ -16,6 +16,7 @@ type Project = {
 
 export function TradeProjectSearch() {
   const { connection } = useConnection();
+  const searchFieldId = useId();
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<Scope>("All");
   const [rows, setRows] = useState<Project[]>([]);
@@ -69,16 +70,22 @@ export function TradeProjectSearch() {
       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
         Project Search
       </p>
+      <label htmlFor={searchFieldId} className="sr-only">
+        Search launched projects by contract address, name, or ticker
+      </label>
       <SearchInput
+        id={searchFieldId}
         value={query}
         onChange={setQuery}
         placeholder="Search launched project by CA, name, or ticker"
       />
-      <FilterPills
-        value={scope}
-        onChange={setScope}
-        options={["All", "Name/Ticker", "Contract Address"]}
-      />
+      <div role="group" aria-label="Search filters">
+        <FilterPills
+          value={scope}
+          onChange={setScope}
+          options={["All", "Name/Ticker", "Contract Address"]}
+        />
+      </div>
       <div className="space-y-2">
         {loading ? (
           <p className="text-xs text-zinc-500">Loading launched projects…</p>

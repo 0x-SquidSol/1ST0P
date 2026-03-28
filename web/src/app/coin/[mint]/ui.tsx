@@ -69,6 +69,7 @@ export function CoinDetail({ mintStr }: { mintStr: string }) {
       <Link
         href="/"
         className="inline-flex text-sm text-zinc-500 hover:text-zinc-100"
+        aria-label="Back to pulse home"
       >
         ← Back to pulse
       </Link>
