@@ -12,9 +12,23 @@ import { type ReactNode, useMemo } from "react";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
+/** Solana Connection rejects empty or scheme-less URLs (common when Vercel env is set but blank). */
+function connectionEndpointFromEnv(
+  raw: string | undefined,
+  net: WalletAdapterNetwork,
+): string {
+  const trimmed = raw?.trim() ?? "";
+  if (!trimmed) {
+    return clusterApiUrl(net);
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 const network = WalletAdapterNetwork.Devnet;
-const endpoint =
-  process.env.NEXT_PUBLIC_RPC ?? clusterApiUrl(network);
+const endpoint = connectionEndpointFromEnv(process.env.NEXT_PUBLIC_RPC, network);
 
 export function WalletProviders({ children }: { children: ReactNode }) {
   const wallets = useMemo(
