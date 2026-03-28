@@ -36,9 +36,8 @@ This document maps the product requirements into concrete routing and UI structu
 
 #### Marketplace Context
 
-- Discover
-- Providers
-- Projects
+- **Removed from shell:** the marketplace lane uses a full-width primary layout on `/marketplace` and related routes. Discovery, provider samples, category search, and “How it works” live on the page—no left rail.
+- Provider application: `/marketplace/apply` (intake placeholder ahead of full form).
 
 #### Trade Context
 

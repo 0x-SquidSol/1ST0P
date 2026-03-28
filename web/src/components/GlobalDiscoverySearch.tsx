@@ -24,7 +24,9 @@ const SERVICES = [
 ];
 
 const SECTIONS = [
-  { label: "Become a Service Provider", href: "/marketplace" },
+  { label: "Become a Service Provider", href: "/marketplace/apply" },
+  { label: "How marketplace hiring works", href: "/marketplace#how-it-works" },
+  { label: "Sample provider profiles", href: "/marketplace#sample-providers" },
   { label: "Apply to Launch", href: "/launch" },
   { label: "View Projects", href: "/traders" },
   { label: "Contact", href: "/contact" },

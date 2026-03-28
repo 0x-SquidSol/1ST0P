@@ -20,15 +20,6 @@ const CONTEXT_MAP: Array<{ match: RegExp; title: string; items: NavItem[] }> = [
     ],
   },
   {
-    match: /^\/(marketplace|marketplace\/)/,
-    title: "Marketplace",
-    items: [
-      { label: "Discover", href: "/marketplace" },
-      { label: "Providers", href: "/marketplace" },
-      { label: "Projects", href: "/marketplace" },
-    ],
-  },
-  {
     match: /^\/(launch|launch\/)/,
     title: "Launch",
     items: [

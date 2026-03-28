@@ -34,7 +34,7 @@ const personaPaths = [
     description:
       "Apply to list your services and build reputation through verified delivery and buyer feedback.",
     trust: "Manual approval + mandatory buyer reviews at closeout",
-    href: "/marketplace",
+    href: "/marketplace/apply",
     cta: "Apply as Provider",
     next: "Next: submit provider application for review",
   },

@@ -123,6 +123,12 @@ Give buyers a safe place to purchase services with clear custody and quality enf
   - funds held in treasury/escrow until completion criteria are met
   - support for milestone or timeboxed (daily/weekly) release cadence
   - dispute path allowing partial/full refunds on unmet deliverables
+- **Platform fee (target):** the greater of (a) a fixed minimum fee (e.g. 0.1 SOL on devnet) and (b) 1% of the booked engagement amount—disclosed before payment; final schedule published in policy UI.
+- **Pre-funding agreement (target):** buyers and providers agree scope, timeline, commercial terms, and acceptance criteria before treasury receives funds (structured engagement record, not ad-hoc DMs only).
+- **Identity and collaboration (discovery / later commits):**
+  - Optional wallet-scoped display identity: unique username 1:1 with wallet public key for profiles and routing.
+  - Engagement workspace: messaging and proof-of-delivery artifacts tied to the engagement.
+  - Adjustable standard contract template: parties review and accept a base agreement before the engagement activates and funds move.
 - At completion, buyer must submit mandatory feedback:
   - 1-5 star rating
   - minimum 50-character written review
