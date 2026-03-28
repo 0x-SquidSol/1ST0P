@@ -37,8 +37,10 @@ export function WalletSummary() {
   if (!mounted || !connected || !publicKey) return null;
 
   return (
-    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-300">
-      <span>{balance === null ? "— SOL" : `${balance.toFixed(3)} SOL`}</span>
+    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/60 px-1.5 py-1 text-[11px] text-zinc-300 sm:flex-nowrap sm:gap-2 sm:px-2 sm:py-1">
+      <span className="tabular-nums">
+        {balance === null ? "— SOL" : `${balance.toFixed(3)} SOL`}
+      </span>
       <button
         type="button"
         onClick={async () => {
@@ -50,9 +52,13 @@ export function WalletSummary() {
             setCopied(false);
           }
         }}
-        className="rounded border border-white/10 px-1.5 py-0.5 text-zinc-300 hover:text-white"
+        className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 text-zinc-300 hover:text-white sm:px-2"
+        aria-label={copied ? "Address copied" : "Copy wallet address"}
       >
-        {copied ? "Wallet copied" : "Copy wallet address"}
+        <span className="sm:hidden">{copied ? "Copied" : "Copy"}</span>
+        <span className="hidden sm:inline">
+          {copied ? "Wallet copied" : "Copy wallet address"}
+        </span>
       </button>
     </div>
   );

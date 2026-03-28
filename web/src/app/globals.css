@@ -21,7 +21,7 @@
 }
 
 html {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 /* Skip link: off-screen until keyboard focus */
@@ -89,7 +89,7 @@ body {
     var(--background);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   min-height: 100vh;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 .wallet-btn {
@@ -113,6 +113,18 @@ body {
 .wallet-btn:focus-visible {
   outline: 2px solid #e2d9c8 !important;
   outline-offset: 2px !important;
+}
+
+@media (max-width: 639px) {
+  .wallet-btn-header.wallet-btn,
+  .wallet-btn-header.wallet-adapter-button,
+  .wallet-btn-header.wallet-adapter-button-trigger {
+    min-height: 2.25rem !important;
+    min-width: 6.75rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
 }
 
 /* Wallet Adapter (Phantom button) theme overrides */

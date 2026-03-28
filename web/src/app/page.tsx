@@ -106,14 +106,16 @@ export default function HomePage() {
           title="Choose your 1ST0P lane"
           description="Every lane is built around accountability, clear process, and discoverable execution."
         />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
           {personaPaths.map((path) => (
             <div
               key={path.title}
-              className="polish-card-interactive flex min-h-[210px] flex-col rounded-2xl bg-zinc-950/45 p-5 sm:p-6"
+              className="polish-card-interactive flex min-h-[210px] min-w-0 max-w-full flex-col rounded-2xl bg-zinc-950/45 p-5 sm:p-6"
             >
               <h3 className="text-lg font-semibold text-zinc-100">{path.title}</h3>
-              <p className="mt-2 text-sm text-zinc-400">{path.description}</p>
+              <p className="mt-2 break-words text-sm text-zinc-400">
+                {path.description}
+              </p>
               <p className="mt-3 text-xs text-zinc-500">{path.trust}</p>
               <p className="mt-2 text-xs text-zinc-600">{path.next}</p>
               <Link

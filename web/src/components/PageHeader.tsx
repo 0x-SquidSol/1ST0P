@@ -17,13 +17,15 @@ export function PageHeader({
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
           {label}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight text-zinc-100 sm:text-3xl">
+        <h1 className="mt-2 break-words text-2xl font-semibold leading-tight text-zinc-100 sm:text-3xl">
           {title}
         </h1>
       </div>
-      <div className="flex min-w-0 max-w-2xl flex-col items-start gap-3">
+      <div className="flex min-w-0 max-w-full flex-col items-start gap-3 sm:max-w-2xl">
         {description ? (
-          <p className="text-sm leading-relaxed text-zinc-400">{description}</p>
+          <p className="break-words text-sm leading-relaxed text-zinc-400">
+            {description}
+          </p>
         ) : null}
         {right}
       </div>

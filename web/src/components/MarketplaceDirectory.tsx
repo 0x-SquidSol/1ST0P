@@ -39,7 +39,7 @@ export function MarketplaceDirectory() {
   );
 
   return (
-    <section className="polish-surface-subtle space-y-4 rounded-3xl bg-zinc-950/38 p-4 sm:p-6">
+    <section className="polish-surface-subtle max-w-full min-w-0 space-y-4 rounded-3xl bg-zinc-950/38 p-4 sm:p-6">
       <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
         Service Search
       </p>

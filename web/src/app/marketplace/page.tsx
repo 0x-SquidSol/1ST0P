@@ -33,8 +33,8 @@ function MarketplaceDirectoryFallback() {
 
 export default function MarketplacePage() {
   return (
-    <div className="space-y-8 sm:space-y-12">
-      <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
+    <div className="min-w-0 space-y-8 sm:space-y-12">
+      <section className="polish-surface-page max-w-full min-w-0 rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Marketplace"
           title="Discover Services and Providers"
