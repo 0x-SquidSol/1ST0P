@@ -296,7 +296,7 @@ export function TradePanel({
   ]);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 shadow-inner shadow-black/40 sm:p-5">
+    <div className="polish-trade-shell rounded-2xl bg-zinc-950/60 p-4 sm:p-5">
       <div className="flex gap-2 rounded-xl bg-zinc-900/80 p-1">
         <button
           type="button"
@@ -355,7 +355,7 @@ export function TradePanel({
             type="button"
             disabled={busy}
             onClick={() => void execBuy()}
-            className="w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 py-2.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/25 disabled:opacity-50"
+            className="polish-btn-primary w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 py-2.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/25 disabled:opacity-50"
           >
             {busy ? "Confirm in wallet…" : "Buy on curve"}
           </button>
@@ -391,7 +391,7 @@ export function TradePanel({
             type="button"
             disabled={busy}
             onClick={() => void execSell()}
-            className="w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 py-2.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/25 disabled:opacity-50"
+            className="polish-btn-primary w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 py-2.5 text-sm font-bold text-zinc-950 shadow-lg shadow-black/25 disabled:opacity-50"
           >
             {busy ? "Confirm in wallet…" : "Sell into curve"}
           </button>

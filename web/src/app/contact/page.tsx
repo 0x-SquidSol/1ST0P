@@ -43,7 +43,7 @@ export default function ContactPage() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      <section className="rounded-3xl border border-white/10 bg-zinc-950/50 p-4 sm:p-6 md:p-8">
+      <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Contact"
           title="Get in Touch"
@@ -52,7 +52,7 @@ export default function ContactPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-5">
-        <article className="rounded-2xl border border-white/10 bg-zinc-950/40 p-6 lg:col-span-2">
+        <article className="polish-surface-subtle rounded-2xl p-6 lg:col-span-2">
           <h2 className="text-lg font-semibold text-zinc-100">Project Links</h2>
           <p className="mt-3 text-sm text-zinc-400">
             Keep this section minimal and high-signal. Replace the placeholder X
@@ -62,13 +62,13 @@ export default function ContactPage() {
             href={PROJECT_X_URL}
             target="_blank"
             rel="noreferrer"
-            className="mt-5 inline-flex rounded-lg border border-white/15 bg-zinc-900/80 px-4 py-2 text-sm text-zinc-200 transition hover:border-white/25 hover:text-white"
+            className="polish-cta-link mt-5 inline-flex rounded-lg bg-zinc-900/85 px-4 py-2 text-sm text-zinc-100"
           >
             Project X (placeholder)
           </a>
         </article>
 
-        <article className="rounded-2xl border border-white/10 bg-zinc-950/40 p-6 lg:col-span-3">
+        <article className="polish-surface-subtle rounded-2xl p-6 lg:col-span-3">
           <h2 className="text-lg font-semibold text-zinc-100">Contact Form</h2>
           <p className="mt-3 text-sm text-zinc-400">
             Messages route to the configured project email. Basic anti-spam guard

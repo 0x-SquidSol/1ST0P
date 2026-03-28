@@ -158,7 +158,7 @@ export function LaunchCoin({ onCreated }: { onCreated?: () => void }) {
         type="button"
         disabled={busy}
         onClick={() => void run()}
-        className="w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-400 px-4 py-3 text-sm font-bold text-zinc-950 shadow-xl shadow-black/25 disabled:opacity-50 sm:w-auto"
+        className="polish-btn-primary w-full rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-400 px-4 py-3 text-sm font-bold text-zinc-950 shadow-xl shadow-black/25 disabled:opacity-50 sm:w-auto"
       >
         {busy ? "Deploying…" : `Pay ${LAUNCH_FEE_SOL} SOL & launch`}
       </button>

@@ -3,13 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --background: #131417;
-  --foreground: #f4f4f5;
-  --muted: #9ca3af;
+  /* Slightly lifted base + brighter copy (silver / white forward) */
+  --background: #15161c;
+  --foreground: #fafafa;
+  --muted: #a1a1aa;
   --steel-1: #2f3238;
   --steel-2: #4b5058;
   --steel-3: #b6bbc4;
-  --paper: #f2f3f5;
+  --paper: #f6f7f8;
+  /* Metallic accents — champagne gold + cool silver (no new hue families elsewhere) */
+  --accent-silver: #d4d8e0;
+  --accent-silver-dim: rgba(200, 206, 218, 0.45);
+  --accent-gold: #c9a962;
+  --accent-gold-soft: rgba(201, 169, 98, 0.2);
+  --accent-gold-line: rgba(214, 190, 130, 0.55);
+  --accent-gold-glow: rgba(201, 169, 98, 0.12);
 }
 
 html {
@@ -56,22 +64,27 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #d4d4d8;
+  outline: 2px solid #e2d9c8;
   outline-offset: 2px;
 }
 
 body {
   color: var(--foreground);
-  background: radial-gradient(
-      1200px 600px at 10% -10%,
-      rgba(182, 187, 196, 0.16),
-      transparent 60%
+  background:
+    radial-gradient(
+      720px 480px at 50% -18%,
+      var(--accent-gold-soft),
+      transparent 58%
     ),
     radial-gradient(
-      900px 500px at 90% 0%,
-      rgba(75, 80, 88, 0.28),
-      transparent 55%
-  
+      1200px 600px at 8% -8%,
+      rgba(230, 234, 242, 0.32),
+      transparent 58%
+    ),
+    radial-gradient(
+      900px 520px at 92% 4%,
+      rgba(88, 92, 102, 0.32),
+      transparent 52%
     ),
     var(--background);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
@@ -80,14 +93,16 @@ body {
 }
 
 .wallet-btn {
-  background: rgba(24, 24, 27, 0.9) !important;
-  color: #f4f4f5 !important;
+  background: rgba(28, 28, 32, 0.92) !important;
+  color: #fafafa !important;
   border-radius: 0.75rem !important;
   font-weight: 600 !important;
   font-size: 0.875rem !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 8px 20px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(220, 224, 232, 0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(201, 169, 98, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.32) !important;
 }
 
 .wallet-btn:not([disabled]):hover {
@@ -96,21 +111,23 @@ body {
 }
 
 .wallet-btn:focus-visible {
-  outline: 2px solid #d4d4d8 !important;
+  outline: 2px solid #e2d9c8 !important;
   outline-offset: 2px !important;
 }
 
 /* Wallet Adapter (Phantom button) theme overrides */
 .wallet-adapter-button,
 .wallet-adapter-button-trigger {
-  background: rgba(24, 24, 27, 0.9) !important;
-  color: #f4f4f5 !important;
+  background: rgba(28, 28, 32, 0.92) !important;
+  color: #fafafa !important;
   border-radius: 0.75rem !important;
   font-weight: 700 !important;
   font-size: 0.875rem !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 8px 20px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(220, 224, 232, 0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(201, 169, 98, 0.1),
+    0 8px 22px rgba(0, 0, 0, 0.32) !important;
 }
 
 .wallet-adapter-button:not([disabled]):hover,
@@ -126,7 +143,7 @@ body {
 
 .wallet-adapter-button:focus-visible,
 .wallet-adapter-button-trigger:focus-visible {
-  outline: 2px solid #d4d4d8 !important;
+  outline: 2px solid #e2d9c8 !important;
   outline-offset: 2px !important;
 }
 
@@ -182,11 +199,301 @@ body {
     0% 70%,
     0% 30%
   );
-  box-shadow: 0 0 0 2px #3a3e46, 0 10px 20px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 0 0 2px #7a8290,
+    0 0 0 3px rgba(201, 169, 98, 0.22),
+    0 0 36px rgba(201, 169, 98, 0.14),
+    0 0 28px rgba(220, 226, 236, 0.1),
+    0 14px 28px rgba(0, 0, 0, 0.32);
 }
 
 .brand-sign-text {
   font-family: var(--font-geist-mono), monospace;
   letter-spacing: 0.08em;
   color: #111318;
+}
+
+/* Surface polish: elevation, borders, restrained motion */
+
+.polish-header {
+  border-bottom-color: rgba(232, 236, 244, 0.22);
+  box-shadow:
+    0 1px 0 var(--accent-gold-line),
+    0 2px 0 rgba(255, 255, 255, 0.05),
+    0 22px 60px rgba(0, 0, 0, 0.5);
+}
+
+.polish-footer {
+  border-top-color: rgba(232, 236, 244, 0.2);
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 -2px 0 rgba(201, 169, 98, 0.08);
+}
+
+.polish-hero {
+  border: 1px solid rgba(240, 242, 248, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 var(--accent-gold-soft),
+    0 0 0 1px rgba(0, 0, 0, 0.32),
+    0 28px 90px rgba(0, 0, 0, 0.52),
+    0 0 100px var(--accent-gold-glow);
+}
+
+@keyframes polish-aurora {
+  0% {
+    opacity: 0.72;
+    transform: translate3d(-1.5%, -1%, 0) scale(1);
+  }
+  33% {
+    opacity: 0.95;
+    transform: translate3d(1.2%, 0.8%, 0) scale(1.02);
+  }
+  66% {
+    opacity: 0.85;
+    transform: translate3d(0.6%, -1.2%, 0) scale(1.015);
+  }
+  100% {
+    opacity: 0.78;
+    transform: translate3d(-1%, 0.4%, 0) scale(1);
+  }
+}
+
+.polish-hero-aurora {
+  animation: polish-aurora 24s ease-in-out infinite;
+}
+
+.polish-section {
+  border: 1px solid rgba(236, 238, 245, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(201, 169, 98, 0.05),
+    0 16px 48px rgba(0, 0, 0, 0.4),
+    0 0 48px rgba(201, 169, 98, 0.04);
+}
+
+.polish-surface-page {
+  border: 1px solid rgba(236, 238, 245, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(201, 169, 98, 0.04),
+    0 18px 52px rgba(0, 0, 0, 0.42),
+    0 0 56px rgba(220, 226, 236, 0.04);
+}
+
+.polish-surface-subtle {
+  border: 1px solid rgba(228, 232, 240, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 36px rgba(0, 0, 0, 0.36),
+    0 0 40px rgba(201, 169, 98, 0.03);
+}
+
+.polish-inset-panel {
+  border: 1px solid rgba(228, 232, 240, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 14px 40px rgba(0, 0, 0, 0.38),
+    0 0 36px rgba(201, 169, 98, 0.04);
+}
+
+.polish-card-interactive {
+  border: 1px solid rgba(230, 233, 240, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 40px rgba(0, 0, 0, 0.34),
+    0 0 36px rgba(201, 169, 98, 0.03);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.polish-card-interactive:hover {
+  transform: translateY(-3px);
+  border-color: rgba(244, 246, 250, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.48),
+    0 0 48px var(--accent-gold-glow);
+}
+
+.polish-pill {
+  border: 1px solid rgba(220, 224, 232, 0.2);
+  background: rgba(32, 33, 38, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(201, 169, 98, 0.06);
+}
+
+.polish-badge-strip {
+  border: 1px solid var(--accent-gold-line);
+  background: rgba(36, 37, 44, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 var(--accent-gold-soft),
+    0 4px 24px rgba(0, 0, 0, 0.28),
+    0 0 28px var(--accent-gold-glow);
+}
+
+.polish-trust-tile {
+  border: 1px solid rgba(220, 224, 232, 0.16);
+  background: rgba(44, 45, 52, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(201, 169, 98, 0.05);
+}
+
+.polish-cta-link {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(220, 224, 232, 0.28) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.36),
+    0 0 0 1px rgba(201, 169, 98, 0.1);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.polish-cta-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.35) 48%,
+    rgba(230, 210, 160, 0.25) 52%,
+    transparent 66%
+  );
+  transform: translateX(-130%);
+  opacity: 0;
+  transition:
+    transform 0.55s ease,
+    opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.polish-cta-link:hover::after {
+  transform: translateX(130%);
+  opacity: 1;
+}
+
+.polish-cta-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-gold-line) !important;
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.45),
+    0 0 36px var(--accent-gold-glow);
+}
+
+.polish-btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.polish-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.55) 46%,
+    rgba(240, 220, 175, 0.45) 52%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  opacity: 0;
+  transition:
+    transform 0.5s ease,
+    opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.polish-btn-primary:hover:not(:disabled)::after {
+  transform: translateX(120%);
+  opacity: 1;
+}
+
+.polish-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06) saturate(1.02);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 32px var(--accent-gold-glow);
+}
+
+.polish-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.polish-trade-shell {
+  border: 1px solid rgba(232, 236, 244, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 18px 52px rgba(0, 0, 0, 0.4),
+    0 0 48px rgba(201, 169, 98, 0.05);
+}
+
+.polish-state-card {
+  border: 1px solid rgba(228, 232, 240, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 14px 42px rgba(0, 0, 0, 0.38),
+    0 0 40px rgba(201, 169, 98, 0.04);
+}
+
+.polish-modal {
+  border: 1px solid rgba(236, 238, 245, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 var(--accent-gold-soft),
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 36px 110px rgba(0, 0, 0, 0.62),
+    0 0 80px rgba(201, 169, 98, 0.06);
+}
+
+.polish-init-dashed {
+  border: 1px dashed var(--accent-gold-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 14px 42px rgba(0, 0, 0, 0.38),
+    0 0 40px var(--accent-gold-glow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .polish-hero-aurora {
+    animation: none;
+  }
+
+  .polish-card-interactive,
+  .polish-cta-link,
+  .polish-btn-primary {
+    transition: none;
+  }
+
+  .polish-card-interactive:hover {
+    transform: none;
+  }
+
+  .polish-cta-link::after,
+  .polish-btn-primary::after {
+    display: none;
+  }
+
+  .polish-cta-link:hover,
+  .polish-btn-primary:hover:not(:disabled) {
+    transform: none;
+    filter: none;
+  }
 }

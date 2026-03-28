@@ -59,10 +59,7 @@ export function InitializeLaunchpad({
   }, [connection, onInitialized, treasuryInput, wallet]);
 
   return (
-    <div
-      id="init"
-      className="rounded-2xl border border-dashed border-white/20 bg-zinc-950/40 p-6"
-    >
+    <div id="init" className="polish-init-dashed rounded-2xl bg-zinc-950/42 p-6">
       <h3 className="text-sm font-semibold text-zinc-100">
         One-time: initialize launchpad config
       </h3>
@@ -85,7 +82,7 @@ export function InitializeLaunchpad({
           type="button"
           onClick={() => void run()}
           disabled={busy}
-          className="rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-black/20 disabled:opacity-50"
+          className="polish-btn-primary rounded-xl border border-white/15 bg-gradient-to-r from-zinc-200 to-zinc-400 px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg shadow-black/20 disabled:opacity-50"
         >
           {busy ? "Working…" : "Initialize"}
         </button>

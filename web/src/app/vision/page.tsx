@@ -18,7 +18,7 @@ const pillars = [
 export default function VisionPage() {
   return (
     <div className="space-y-8 sm:space-y-12">
-      <section className="rounded-3xl border border-white/10 bg-zinc-950/50 p-4 sm:p-6 md:p-8">
+      <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Vision"
           title="Why 1ST0P Exists"
@@ -30,7 +30,7 @@ export default function VisionPage() {
         {pillars.map((pillar) => (
           <article
             key={pillar.title}
-            className="rounded-2xl border border-white/10 bg-zinc-950/40 p-6"
+            className="polish-card-interactive rounded-2xl bg-zinc-950/42 p-6"
           >
             <h2 className="text-lg font-semibold text-zinc-100">{pillar.title}</h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">

@@ -21,7 +21,7 @@ const statusCards = [
 export default function StatusPage() {
   return (
     <div className="space-y-8 sm:space-y-12">
-      <section className="rounded-3xl border border-white/10 bg-zinc-950/50 p-4 sm:p-6 md:p-8">
+      <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Status"
           title="Build Status"
@@ -33,7 +33,7 @@ export default function StatusPage() {
         {statusCards.map((card) => (
           <article
             key={card.area}
-            className="rounded-2xl border border-white/10 bg-zinc-950/40 p-6"
+            className="polish-card-interactive rounded-2xl bg-zinc-950/42 p-6"
           >
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
               {card.state}

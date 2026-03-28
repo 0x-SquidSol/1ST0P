@@ -14,7 +14,7 @@ export function PageHeader({
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-3">
       <div className="min-w-0">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
           {label}
         </p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight text-zinc-100 sm:text-3xl">

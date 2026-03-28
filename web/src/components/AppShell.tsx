@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {context ? (
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
             <aside className="min-w-0 lg:sticky lg:top-24 lg:h-fit" aria-label={`${context.title} section`}>
-              <div className="rounded-2xl border border-white/10 bg-zinc-950/50 p-3">
+              <div className="polish-inset-panel rounded-2xl bg-zinc-950/50 p-3">
                 <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                   {context.title} Context
                 </p>
@@ -96,7 +96,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           children
         )}
       </main>
-      <footer className="mt-10 border-t border-white/10" aria-label="Site footer">
+      <footer
+        className="polish-footer mt-10 border-t border-white/10"
+        aria-label="Site footer"
+      >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-3 py-8 text-sm text-zinc-400 sm:px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="min-w-0 text-center sm:text-left">

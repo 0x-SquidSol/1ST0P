@@ -43,7 +43,7 @@ export function FilterPills<T extends string>({
           onClick={() => onChange(option)}
           className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs uppercase tracking-[0.14em] transition ${
             value === option
-              ? "border-white/20 bg-zinc-800/80 text-zinc-100"
+              ? "border-white/25 bg-zinc-800/90 text-zinc-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10"
               : "border-white/10 bg-zinc-900/60 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
           }`}
         >

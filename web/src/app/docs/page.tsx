@@ -25,7 +25,7 @@ const docLinks = [
 export default function DocsPage() {
   return (
     <div className="space-y-8 sm:space-y-12">
-      <section className="rounded-3xl border border-white/10 bg-zinc-950/50 p-4 sm:p-6 md:p-8">
+      <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Docs"
           title="Documentation Hub"
@@ -40,7 +40,7 @@ export default function DocsPage() {
             href={doc.href}
             target="_blank"
             rel="noreferrer"
-            className="flex min-h-[190px] flex-col rounded-2xl border border-white/10 bg-zinc-950/40 p-6 transition hover:border-white/20"
+            className="polish-card-interactive flex min-h-[190px] flex-col rounded-2xl bg-zinc-950/42 p-6"
           >
             <h2 className="text-lg font-semibold text-zinc-100">{doc.title}</h2>
             <p className="mt-3 text-sm text-zinc-400">{doc.description}</p>
@@ -51,7 +51,7 @@ export default function DocsPage() {
         ))}
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-zinc-950/35 p-6 text-sm text-zinc-400">
+      <section className="polish-surface-subtle rounded-2xl p-6 text-sm text-zinc-400">
         Looking for launch actions? Visit{" "}
         <Link href="/launch" className="text-zinc-200 hover:text-white">
           Launch

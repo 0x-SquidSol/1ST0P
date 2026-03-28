@@ -55,7 +55,7 @@ export function SearchModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="mb-4 w-full max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-bottom)-1.5rem))] max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:p-6"
+        className="polish-modal mb-4 w-full max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-bottom)-1.5rem))] max-w-2xl overflow-y-auto rounded-3xl bg-zinc-950 p-4 sm:p-6"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">

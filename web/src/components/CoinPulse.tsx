@@ -58,7 +58,7 @@ export function CoinPulse() {
             <Link
               key={curve.mint.toBase58()}
               href={`/coin/${curve.mint.toBase58()}`}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/40 p-4 transition hover:border-white/25 hover:bg-zinc-950/55 hover:shadow-lg hover:shadow-black/30"
+              className="polish-card-interactive group relative overflow-hidden rounded-2xl bg-zinc-950/42 p-4"
             >
               <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(242,243,245,0.28),rgba(75,80,88,0.0)_65%)] blur-2xl transition group-hover:scale-110" />
               <div className="relative flex items-start justify-between gap-3">

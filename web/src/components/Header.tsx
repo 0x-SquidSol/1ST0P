@@ -30,7 +30,10 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl" aria-label="Site header">
+    <header
+      className="polish-header sticky top-0 z-50 border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl"
+      aria-label="Site header"
+    >
       <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-4 sm:py-4">
         <div className="min-w-0 shrink-0">
           <Link
