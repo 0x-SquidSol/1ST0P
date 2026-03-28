@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { SearchModal } from "@/components/SearchModal";
 import { WalletSummary } from "@/components/WalletSummary";
 
@@ -40,9 +41,14 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [walletUiReady, setWalletUiReady] = useState(false);
+  const [menuPortalReady, setMenuPortalReady] = useState(false);
 
   useEffect(() => {
     setWalletUiReady(true);
+  }, []);
+
+  useEffect(() => {
+    setMenuPortalReady(true);
   }, []);
 
   useEffect(() => {
@@ -79,10 +85,10 @@ export function Header() {
 
   return (
     <header
-      className="polish-header sticky top-0 z-50 border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl"
+      className="polish-header sticky top-0 z-50 overflow-visible border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl"
       aria-label="Site header"
     >
-      <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-4">
+      <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-2 overflow-visible py-2.5 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:gap-4 sm:px-4 sm:py-4">
         <div className="min-w-0 shrink-0">
           <Link
             href="/"
@@ -140,11 +146,11 @@ export function Header() {
           </button>
         </nav>
 
-        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 sm:ml-0 sm:gap-2 lg:contents">
+        <div className="relative z-[60] flex min-w-0 flex-1 basis-0 items-center justify-end gap-1 overflow-x-hidden sm:flex-none sm:basis-auto sm:gap-2 sm:overflow-x-visible">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-300 transition hover:text-zinc-100 lg:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-300 transition hover:text-zinc-100 sm:hidden"
             aria-label="Open search"
             aria-expanded={searchOpen}
             aria-controls="global-search-dialog"
@@ -198,10 +204,14 @@ export function Header() {
             </svg>
           </button>
 
-          <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
-            <WalletSummary />
+          <div className="relative flex min-w-0 max-w-full items-center gap-1 overflow-visible sm:max-w-none sm:gap-2">
+            <div className="hidden min-w-0 sm:flex sm:items-center">
+              <WalletSummary />
+            </div>
             {walletUiReady ? (
-              <WalletMultiButton className="wallet-btn wallet-btn-header" />
+              <div className="wallet-multi-wrap min-w-0 max-w-[min(100%,10.5rem)] sm:max-w-none">
+                <WalletMultiButton className="wallet-btn wallet-btn-header" />
+              </div>
             ) : (
               <div
                 className="wallet-btn wallet-btn-header h-9 min-w-[7.25rem] rounded-xl border border-white/16 bg-zinc-900/90 sm:h-10 sm:min-w-[148px]"
@@ -214,80 +224,89 @@ export function Header() {
         </div>
       </div>
 
-      {menuOpen ? (
-        <div className="fixed inset-0 z-[90] sm:hidden" id="mobile-nav-panel">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            aria-label="Close menu"
-            onClick={() => setMenuOpen(false)}
-          />
-          <div
-            className="polish-modal absolute right-0 top-0 flex h-full w-[min(100%,20rem)] flex-col border-l border-white/10 bg-zinc-950 shadow-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Site navigation"
-          >
-            <div className="flex items-center justify-between border-b border-white/10 px-3 py-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Menu
-              </span>
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100"
-              >
-                Close
-              </button>
-            </div>
-            <nav
-              className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
-              aria-label="Mobile primary navigation"
+      {menuOpen && menuPortalReady
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[160] sm:hidden"
+              id="mobile-nav-panel"
             >
               <button
                 type="button"
-                onClick={openSearchFromMenu}
-                className="rounded-lg border border-white/12 bg-zinc-900/70 px-3 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800/80"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                aria-label="Close menu"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div
+                className="polish-modal absolute right-0 top-0 flex h-full w-[min(100%,20rem)] flex-col border-l border-white/10 bg-zinc-950 pt-[env(safe-area-inset-top)] shadow-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Site navigation"
               >
-                Search…
-              </button>
-              {primaryNav.map((item) => {
-                const active =
-                  pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={navLinkClass(active)}
+                <div className="flex items-center justify-between border-b border-white/10 px-3 py-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Menu
+                  </span>
+                  <button
+                    type="button"
                     onClick={() => setMenuOpen(false)}
+                    className="rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100"
                   >
-                    {item.label}
-                  </Link>
-                );
-              })}
-              <p className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
-                More
-              </p>
-              {secondaryNav.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={navLinkClass(active)}
-                    onClick={() => setMenuOpen(false)}
+                    Close
+                  </button>
+                </div>
+                <div className="border-b border-white/10 px-3 pb-3 pt-1">
+                  <WalletSummary variant="menu" />
+                </div>
+                <nav
+                  className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+                  aria-label="Mobile primary navigation"
+                >
+                  <button
+                    type="button"
+                    onClick={openSearchFromMenu}
+                    className="rounded-lg border border-white/12 bg-zinc-900/70 px-3 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800/80"
                   >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-      ) : null}
+                    Search…
+                  </button>
+                  {primaryNav.map((item) => {
+                    const active =
+                      pathname === item.href ||
+                      (item.href !== "/" && pathname.startsWith(item.href));
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={navLinkClass(active)}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                  <p className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+                    More
+                  </p>
+                  {secondaryNav.map((item) => {
+                    const active = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={navLinkClass(active)}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>

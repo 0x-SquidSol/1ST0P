@@ -44,7 +44,7 @@ export function SearchModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-3 pt-[max(2.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:p-4 sm:pt-[12vh]"
+      className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/60 p-3 pt-[max(2.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:p-4 sm:pt-[12vh]"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();

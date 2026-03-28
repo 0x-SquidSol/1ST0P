@@ -115,15 +115,26 @@ body {
   outline-offset: 2px !important;
 }
 
+/* Narrow / in-app browsers (e.g. Phantom): cap width, ellipsis long labels */
+.wallet-multi-wrap .wallet-btn-header.wallet-adapter-button,
+.wallet-multi-wrap .wallet-btn-header.wallet-adapter-button-trigger {
+  max-width: 100% !important;
+}
+
 @media (max-width: 639px) {
   .wallet-btn-header.wallet-btn,
-  .wallet-btn-header.wallet-adapter-button,
-  .wallet-btn-header.wallet-adapter-button-trigger {
+  .wallet-multi-wrap .wallet-btn-header.wallet-adapter-button,
+  .wallet-multi-wrap .wallet-btn-header.wallet-adapter-button-trigger {
     min-height: 2.25rem !important;
-    min-width: 6.75rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 0.75rem !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+    font-size: 0.7rem !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
   }
 }
 
@@ -194,6 +205,27 @@ body {
 
 .wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover {
   background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Above sticky header (z-50) and page layers; below global search (z-[200]) */
+.wallet-adapter-dropdown {
+  z-index: 120 !important;
+}
+
+.wallet-adapter-dropdown-list {
+  z-index: 121 !important;
+}
+
+.wallet-adapter-modal {
+  z-index: 130 !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  z-index: 130 !important;
+}
+
+.wallet-adapter-collapse {
+  z-index: 120 !important;
 }
 
 .brand-sign {
