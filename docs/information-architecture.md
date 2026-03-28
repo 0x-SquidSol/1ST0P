@@ -96,8 +96,9 @@ Notes:
 
 ### Core Pages
 
-- Provider discovery/listing
-- Provider profile
+- Marketplace shell (`/marketplace`) with section tabs (service search, how-it-works, samples, FAQs)
+- Service search lists categories and live suggestions; each category links to **`/marketplace/browse/[slug]`** (providers offering that service)
+- Full provider profile / “ad” (`/marketplace/providers/[slug]`) — same template for every approved provider once applications drive data
 - Buyer hiring/work order flow
 - Milestone/timeboxed contract setup
 - Escrow and payout state views
@@ -124,9 +125,9 @@ Notes:
 
 ### Core Pages
 
-- Market pulse overview
-- Project listing by lifecycle status
-- Project detail with trust context
+- Market pulse overview (`/`)
+- Project browse / directory (`/traders`, anchored list `#project-directory`) — on-chain program accounts, search + sort
+- Project detail / trade (`/coin/[mint]`)
 - Watchlist and recent activity modules
 
 ### Trade Lane Rules

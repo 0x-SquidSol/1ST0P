@@ -15,8 +15,7 @@ const CONTEXT_MAP: Array<{ match: RegExp; title: string; items: NavItem[] }> = [
     title: "Trade",
     items: [
       { label: "Pulse", href: "/" },
-      { label: "Watchlist", href: "/traders" },
-      { label: "Recent Trades", href: "/traders" },
+      { label: "Project directory", href: "/traders#project-directory" },
     ],
   },
   {

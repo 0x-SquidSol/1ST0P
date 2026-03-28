@@ -8,6 +8,8 @@ import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
 
 type Scope = "All" | "Name/Ticker" | "Contract Address";
 
+type SortMode = "Recent" | "Name";
+
 type Project = {
   mint: string;
   name: string;
@@ -19,6 +21,7 @@ export function TradeProjectSearch() {
   const searchFieldId = useId();
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<Scope>("All");
+  const [sort, setSort] = useState<SortMode>("Recent");
   const [rows, setRows] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +51,7 @@ export function TradeProjectSearch() {
   const normalized = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    return rows.filter((r) => {
+    const list = rows.filter((r) => {
       if (!normalized) return true;
       if (scope === "Contract Address") return r.mint.toLowerCase().includes(normalized);
       if (scope === "Name/Ticker") {
@@ -63,13 +66,38 @@ export function TradeProjectSearch() {
         r.symbol.toLowerCase().includes(normalized)
       );
     });
-  }, [normalized, rows, scope]);
+    if (sort === "Name") {
+      return [...list].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      );
+    }
+    return list;
+  }, [normalized, rows, scope, sort]);
 
   return (
-    <section className="polish-surface-subtle space-y-4 rounded-3xl bg-zinc-950/38 p-4 sm:p-6">
-      <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-        Project Search
-      </p>
+    <section
+      id="project-directory"
+      className="polish-surface-subtle space-y-4 scroll-mt-24 rounded-3xl bg-zinc-950/38 p-4 sm:p-6"
+      aria-labelledby="project-directory-heading"
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+            Directory
+          </p>
+          <h2
+            id="project-directory-heading"
+            className="mt-1 text-lg font-semibold text-zinc-100 sm:text-xl"
+          >
+            Launched projects
+          </h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            {loading
+              ? "Loading…"
+              : `${filtered.length} shown · ${rows.length} on-chain`}
+          </p>
+        </div>
+      </div>
       <label htmlFor={searchFieldId} className="sr-only">
         Search launched projects by contract address, name, or ticker
       </label>
@@ -79,20 +107,30 @@ export function TradeProjectSearch() {
         onChange={setQuery}
         placeholder="Search launched project by CA, name, or ticker"
       />
-      <div role="group" aria-label="Search filters">
+      <div role="group" aria-label="Search field scope">
         <FilterPills
           value={scope}
           onChange={setScope}
           options={["All", "Name/Ticker", "Contract Address"]}
         />
       </div>
-      <div className="space-y-2">
+      <div role="group" aria-label="Sort order">
+        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+          Sort
+        </p>
+        <FilterPills
+          value={sort}
+          onChange={setSort}
+          options={["Recent", "Name"]}
+        />
+      </div>
+      <div className="max-h-[min(70vh,36rem)] space-y-2 overflow-y-auto pr-1 [-webkit-overflow-scrolling:touch]">
         {loading ? (
           <p className="text-xs text-zinc-500">Loading launched projects…</p>
         ) : filtered.length === 0 ? (
           <p className="text-xs text-zinc-500">No matching launched projects.</p>
         ) : (
-          filtered.slice(0, 12).map((row) => (
+          filtered.map((row) => (
             <Link
               key={row.mint}
               href={`/coin/${row.mint}`}

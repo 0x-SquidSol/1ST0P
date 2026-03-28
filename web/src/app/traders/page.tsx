@@ -7,8 +7,8 @@ export default function TradersPage() {
       <section className="polish-surface-page rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Trade Console"
-          title="Market Activity"
-          description="Track launches, scan movement, and review market context in one clean workspace. Watchlists and alerts are scheduled for later phases."
+          title="Browse projects"
+          description="Search and filter every memecoin launched through this program on the active RPC. Open a row for live price, buy/sell, and curve stats. Watchlists and alerts are scheduled for later phases."
         />
       </section>
       <TradeProjectSearch />

@@ -33,6 +33,8 @@ export const MOCK_PROVIDERS: ProviderProfile[] = [
     ],
     approved: true,
     memberSince: "2025-11-01",
+    listingRating: 4.9,
+    reviewCount: 12,
   },
   {
     slug: "signal-growth",
@@ -55,6 +57,8 @@ export const MOCK_PROVIDERS: ProviderProfile[] = [
     ],
     approved: true,
     memberSince: "2025-12-15",
+    listingRating: 4.7,
+    reviewCount: 8,
   },
   {
     slug: "quiet-dev",

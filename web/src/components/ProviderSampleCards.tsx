@@ -44,6 +44,14 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
             </li>
           ))}
         </ul>
+        <p className="mt-3 border-t border-white/[0.06] pt-3">
+          <Link
+            href="/marketplace?tab=search"
+            className="text-[11px] font-medium text-zinc-400 underline decoration-white/20 underline-offset-4 transition hover:text-zinc-200"
+          >
+            Find providers in Service search →
+          </Link>
+        </p>
       </section>
     );
   }
@@ -90,6 +98,14 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
           </li>
         ))}
       </ul>
+      <p className="text-center sm:text-left">
+        <Link
+          href="/marketplace?tab=search"
+          className="text-sm font-medium text-zinc-400 underline decoration-white/20 underline-offset-4 transition hover:text-zinc-200"
+        >
+          Find providers in Service search →
+        </Link>
+      </p>
     </section>
   );
 }

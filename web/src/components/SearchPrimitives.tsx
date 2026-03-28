@@ -6,18 +6,21 @@ export function SearchInput({
   placeholder,
   autoFocus,
   id,
+  onFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   autoFocus?: boolean;
   id?: string;
+  onFocus?: () => void;
 }) {
   return (
     <input
       id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      onFocus={onFocus}
       placeholder={placeholder}
       autoFocus={autoFocus}
       className="w-full rounded-xl border border-white/12 bg-zinc-900/70 px-3 py-2 text-base text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-white/25 sm:text-sm"

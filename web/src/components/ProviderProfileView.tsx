@@ -130,12 +130,18 @@ export function ProviderProfileView({ profile }: { profile: ProviderProfile }) {
         </section>
       ) : null}
 
-      <p className="text-center text-xs text-zinc-500">
+      <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-xs text-zinc-500">
+        <Link
+          href="/marketplace?tab=search"
+          className="text-zinc-300 underline decoration-white/20 underline-offset-4 hover:text-zinc-100"
+        >
+          ← Service search
+        </Link>
         <Link
           href="/marketplace"
-          className="text-zinc-400 underline decoration-white/15 underline-offset-4 hover:text-zinc-200"
+          className="text-zinc-500 underline decoration-white/15 underline-offset-4 hover:text-zinc-200"
         >
-          ← Back to marketplace
+          Marketplace home
         </Link>
       </p>
     </div>

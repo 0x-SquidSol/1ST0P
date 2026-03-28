@@ -1,42 +1,98 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
+import {
+  MARKETPLACE_SERVICES,
+  serviceNameToSlug,
+  type ServiceGroup,
+} from "@/lib/marketplace-services";
+import { listPublicProviders } from "@/lib/mock-providers";
+import type { ProviderProfile } from "@/lib/provider-profile";
 
-type Scope = "All" | "Development" | "Growth" | "Community";
+type Scope = "All" | ServiceGroup;
 
-const SERVICES = [
-  { name: "Website Designers", group: "Development" as Scope },
-  { name: "Front End Developers", group: "Development" as Scope },
-  { name: "Full Stack Developers", group: "Development" as Scope },
-  { name: "Smart Contract Engineers", group: "Development" as Scope },
-  { name: "Smart Contract Auditors", group: "Development" as Scope },
-  { name: "Raid Teams", group: "Growth" as Scope },
-  { name: "Marketing Managers", group: "Growth" as Scope },
-  { name: "KOL Managers", group: "Growth" as Scope },
-  { name: "Brand Designers", group: "Growth" as Scope },
-  { name: "Community Managers", group: "Community" as Scope },
-  { name: "Discord Moderators", group: "Community" as Scope },
-  { name: "Telegram Moderators", group: "Community" as Scope },
-  { name: "X Moderators", group: "Community" as Scope },
-];
+function providerSearchBlob(p: ProviderProfile): string {
+  return [p.displayName, p.headline, p.rateSummary, ...p.skills]
+    .join(" ")
+    .toLowerCase();
+}
+
+function primaryServiceForQuery(p: ProviderProfile, normalized: string): string {
+  const q = normalized.trim();
+  if (!q) return p.skills[0] ?? "Services";
+  const hit = p.skills.find((s) => s.toLowerCase().includes(q));
+  return hit ?? p.skills[0] ?? "Services";
+}
+
+/** One line under the name: service · rating · reviews */
+function providerPreviewSubline(p: ProviderProfile, normalized: string): string {
+  const svc = primaryServiceForQuery(p, normalized);
+  const r = p.listingRating;
+  const n = p.reviewCount ?? 0;
+  const ratingPart =
+    r != null && n > 0
+      ? `${r.toFixed(1)} ★ · ${n} reviews`
+      : r != null
+        ? `${r.toFixed(1)} ★ · no reviews yet`
+        : "— · reviews after first job";
+  return `${svc} · ${ratingPart}`;
+}
 
 export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean }) {
   const params = useSearchParams();
   const searchFieldId = useId();
+  const wrapRef = useRef<HTMLDivElement>(null);
   const seedQuery = params.get("service") ?? "";
   const [query, setQuery] = useState(seedQuery);
   const [scope, setScope] = useState<Scope>("All");
+  const [suggestOpen, setSuggestOpen] = useState(false);
   const normalized = query.trim().toLowerCase();
 
-  const filtered = useMemo(
+  const filteredServices = useMemo(
     () =>
-      SERVICES.filter((s) => (scope === "All" ? true : s.group === scope)).filter(
+      MARKETPLACE_SERVICES.filter((s) => (scope === "All" ? true : s.group === scope)).filter(
         (s) => (normalized ? s.name.toLowerCase().includes(normalized) : true),
       ),
     [normalized, scope],
   );
+
+  const suggestionServices = useMemo(() => {
+    if (normalized.length < 1) return [];
+    return MARKETPLACE_SERVICES.filter((s) =>
+      s.name.toLowerCase().includes(normalized),
+    ).slice(0, 8);
+  }, [normalized]);
+
+  const suggestionProviders = useMemo(() => {
+    if (normalized.length < 1) return [];
+    const approved = listPublicProviders();
+    return approved
+      .filter((p) => providerSearchBlob(p).includes(normalized))
+      .slice(0, 8);
+  }, [normalized]);
+
+  const showPanel =
+    suggestOpen &&
+    normalized.length >= 1 &&
+    (suggestionServices.length > 0 || suggestionProviders.length > 0);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      const el = wrapRef.current;
+      if (!el || !(e.target instanceof Node)) return;
+      if (!el.contains(e.target)) setSuggestOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const onInputChange = useCallback((v: string) => {
+    setQuery(v);
+    setSuggestOpen(true);
+  }, []);
 
   return (
     <section
@@ -52,15 +108,79 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
       {embedded && (
         <h2 className="text-sm font-medium text-zinc-200">Browse services</h2>
       )}
-      <label htmlFor={searchFieldId} className="sr-only">
-        Search marketplace service categories
-      </label>
-      <SearchInput
-        id={searchFieldId}
-        value={query}
-        onChange={setQuery}
-        placeholder="Search service types (e.g. Front End Developers, KOL Managers)"
-      />
+      <p className="text-xs leading-relaxed text-zinc-500">
+        Search surfaces matching services and approved providers. Pick a service row
+        to see everyone who offers it, or open a provider line for their full
+        profile.
+      </p>
+      <div ref={wrapRef} className="relative">
+        <label htmlFor={searchFieldId} className="sr-only">
+          Search marketplace services and providers
+        </label>
+        <SearchInput
+          id={searchFieldId}
+          value={query}
+          onChange={onInputChange}
+          onFocus={() => setSuggestOpen(true)}
+          placeholder="Type a service or provider name…"
+        />
+        {showPanel ? (
+          <div
+            className="polish-surface-subtle absolute left-0 right-0 top-full z-30 mt-1 max-h-[min(70vh,22rem)] overflow-y-auto rounded-xl border border-white/12 bg-zinc-950/95 p-2 shadow-xl backdrop-blur-md [-webkit-overflow-scrolling:touch]"
+            role="region"
+            aria-label="Search matches"
+          >
+            {suggestionServices.length > 0 ? (
+              <div className="mb-2">
+                <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
+                  Services
+                </p>
+                <ul className="space-y-0.5">
+                  {suggestionServices.map((s) => (
+                    <li key={s.name}>
+                      <Link
+                        href={`/marketplace/browse/${serviceNameToSlug(s.name)}`}
+                        className="block rounded-lg px-2 py-2 text-sm text-zinc-200 hover:bg-zinc-900/80"
+                        onClick={() => setSuggestOpen(false)}
+                      >
+                        {s.name}
+                        <span className="mt-0.5 block text-[11px] text-zinc-500">
+                          View providers →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {suggestionProviders.length > 0 ? (
+              <div>
+                <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
+                  Providers
+                </p>
+                <ul className="space-y-0.5">
+                  {suggestionProviders.map((p) => (
+                    <li key={p.slug}>
+                      <Link
+                        href={`/marketplace/providers/${p.slug}`}
+                        className="block rounded-lg px-2 py-2 text-sm text-zinc-200 hover:bg-zinc-900/80"
+                        onClick={() => setSuggestOpen(false)}
+                      >
+                        <span className="font-medium text-zinc-100">
+                          {p.displayName}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">
+                          {providerPreviewSubline(p, normalized)}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       <div role="group" aria-label="Service category filters">
         <FilterPills
           value={scope}
@@ -69,20 +189,23 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
         />
       </div>
       <div className="grid gap-2 md:grid-cols-2">
-        {filtered.length === 0 ? (
+        {filteredServices.length === 0 ? (
           <p className="text-xs text-zinc-500">No matching service categories.</p>
         ) : (
-          filtered.map((s) => (
-            <div
+          filteredServices.map((s) => (
+            <Link
               key={s.name}
-              className="rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200"
+              href={`/marketplace/browse/${serviceNameToSlug(s.name)}`}
+              className="rounded-lg border border-white/10 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-200 transition hover:border-white/20 hover:bg-zinc-900/90"
             >
-              {s.name}
-            </div>
+              <span className="font-medium">{s.name}</span>
+              <span className="mt-0.5 block text-[11px] text-zinc-500">
+                Browse providers →
+              </span>
+            </Link>
           ))
         )}
       </div>
     </section>
   );
 }
-

@@ -35,4 +35,10 @@ export type ProviderProfile = {
   approved: boolean;
   /** ISO date for “member since” style copy */
   memberSince: string;
+  /**
+   * Card / search preview; replaces mock when reviews are on-chain or API-backed
+   * (Phase 2 ranking + buyer feedback).
+   */
+  listingRating?: number;
+  reviewCount?: number;
 };
