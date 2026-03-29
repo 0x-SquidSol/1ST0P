@@ -1,9 +1,32 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ProviderDiscoveryCard } from "@/components/ProviderDiscoveryCard";
+import { allSampleDiscoveryCards } from "@/lib/discovery-cards";
 import { listPublicProviders } from "@/lib/mock-providers";
-import { cardRateSummary } from "@/lib/provider-profile";
+import {
+  MARKETPLACE_REVIEWS_STORAGE_KEY,
+  MARKETPLACE_REVIEWS_UPDATED_EVENT,
+} from "@/lib/marketplace-reviews";
 
 export function ProviderSampleCards({ compact = false }: { compact?: boolean }) {
   const providers = listPublicProviders();
+  const cards = allSampleDiscoveryCards(providers);
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === MARKETPLACE_REVIEWS_STORAGE_KEY) setVersion((v) => v + 1);
+    };
+    const onCustom = () => setVersion((v) => v + 1);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MARKETPLACE_REVIEWS_UPDATED_EVENT, onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MARKETPLACE_REVIEWS_UPDATED_EVENT, onCustom);
+    };
+  }, []);
 
   if (compact) {
     return (
@@ -16,32 +39,20 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
             Providers
           </p>
           <h2 className="mt-0.5 text-sm font-semibold text-zinc-100">
-            Sample profiles
+            Sample listings
           </h2>
           <p className="mt-1 text-[10px] leading-snug text-zinc-600">
-            Mock data — real listings after application + approval.
+            One card per service offered — mock data until applications ship.
           </p>
         </div>
         <ul className="mt-3 flex min-w-0 flex-col gap-2">
-          {providers.map((p) => (
-            <li key={p.slug}>
-              <Link
-                href={`/marketplace/providers/${p.slug}`}
-                className="polish-card-interactive flex flex-col rounded-xl border border-white/10 bg-zinc-950/50 p-3 transition"
-              >
-                <span className="text-sm font-semibold text-zinc-100">
-                  {p.displayName}
-                </span>
-                <span className="mt-1 line-clamp-2 text-[11px] leading-snug text-zinc-500">
-                  {p.headline}
-                </span>
-                <span className="mt-2 text-[10px] font-medium text-zinc-600">
-                  {cardRateSummary(p)}
-                </span>
-                <span className="mt-1.5 text-[10px] text-zinc-600">
-                  View profile →
-                </span>
-              </Link>
+          {cards.map((card) => (
+            <li key={`${card.providerSlug}::${card.serviceName}`}>
+              <ProviderDiscoveryCard
+                card={card}
+                refreshVersion={version}
+                variant="sampleCompact"
+              />
             </li>
           ))}
         </ul>
@@ -68,34 +79,22 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
             Providers
           </p>
           <h2 className="mt-1 break-words text-lg font-semibold text-zinc-100 sm:text-xl">
-            Sample approved profiles
+            Sample listings
           </h2>
         </div>
         <p className="max-w-xl text-xs leading-relaxed text-zinc-500 sm:text-right">
-          Mock data for layout review. Real listings will follow the application
-          and manual approval flow.
+          Each card is one service from an approved provider. The same team can
+          appear more than once if they list multiple services.
         </p>
       </div>
       <ul className="grid min-w-0 gap-3 sm:grid-cols-2">
-        {providers.map((p) => (
-          <li key={p.slug}>
-            <Link
-              href={`/marketplace/providers/${p.slug}`}
-              className="polish-card-interactive flex min-h-[140px] flex-col rounded-2xl bg-zinc-950/45 p-4 sm:p-5"
-            >
-              <span className="text-base font-semibold text-zinc-100">
-                {p.displayName}
-              </span>
-              <span className="mt-2 line-clamp-2 text-sm text-zinc-400">
-                {p.headline}
-              </span>
-              <span className="mt-auto pt-3 text-xs font-medium text-zinc-500">
-                {cardRateSummary(p)}
-              </span>
-              <span className="mt-2 text-xs text-zinc-600">
-                View profile →
-              </span>
-            </Link>
+        {cards.map((card) => (
+          <li key={`${card.providerSlug}::${card.serviceName}`}>
+            <ProviderDiscoveryCard
+              card={card}
+              refreshVersion={version}
+              variant="sample"
+            />
           </li>
         ))}
       </ul>

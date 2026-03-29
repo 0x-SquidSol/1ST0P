@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ProviderDiscoveryCard } from "@/components/ProviderDiscoveryCard";
 import { FilterPills, SearchInput } from "@/components/SearchPrimitives";
+import { discoveryMatchesForSearch } from "@/lib/discovery-cards";
 import {
   MARKETPLACE_SERVICES,
   serviceNameToSlug,
@@ -11,43 +13,11 @@ import {
 } from "@/lib/marketplace-services";
 import { listPublicProviders } from "@/lib/mock-providers";
 import {
-  formatReputationLine,
   MARKETPLACE_REVIEWS_STORAGE_KEY,
   MARKETPLACE_REVIEWS_UPDATED_EVENT,
-  reputationForProviderSlug,
 } from "@/lib/marketplace-reviews";
-import { type ProviderProfile, cardRateSummary } from "@/lib/provider-profile";
 
 type Scope = "All" | ServiceGroup;
-
-function providerSearchBlob(p: ProviderProfile): string {
-  const fromOfferings = p.offerings.flatMap((o) => [
-    o.serviceName,
-    o.rateSummary,
-    ...o.tags,
-  ]);
-  return [p.displayName, p.headline, cardRateSummary(p), ...fromOfferings]
-    .join(" ")
-    .toLowerCase();
-}
-
-function primaryServiceForQuery(p: ProviderProfile, normalized: string): string {
-  const q = normalized.trim();
-  const names = p.offerings.map((o) => o.serviceName);
-  if (!q) return names[0] ?? "Services";
-  const hit = names.find((s) => s.toLowerCase().includes(q));
-  return hit ?? names[0] ?? "Services";
-}
-
-/** One line under the name: service · merged reputation line */
-function providerPreviewSubline(p: ProviderProfile, normalized: string): string {
-  const svc = primaryServiceForQuery(p, normalized);
-  const rep = reputationForProviderSlug(p.slug, {
-    listingRating: p.listingRating,
-    reviewCount: p.reviewCount,
-  });
-  return `${svc} · ${formatReputationLine(rep)}`;
-}
 
 export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean }) {
   const params = useSearchParams();
@@ -75,19 +45,16 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
     ).slice(0, 8);
   }, [normalized]);
 
-  const suggestionProviders = useMemo(() => {
+  const suggestionDiscovery = useMemo(() => {
     if (normalized.length < 1) return [];
     void reviewEpoch;
-    const approved = listPublicProviders();
-    return approved
-      .filter((p) => providerSearchBlob(p).includes(normalized))
-      .slice(0, 8);
+    return discoveryMatchesForSearch(listPublicProviders(), normalized, 16);
   }, [normalized, reviewEpoch]);
 
   const showPanel =
     suggestOpen &&
     normalized.length >= 1 &&
-    (suggestionServices.length > 0 || suggestionProviders.length > 0);
+    (suggestionServices.length > 0 || suggestionDiscovery.length > 0);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -132,9 +99,8 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
         <h2 className="text-sm font-medium text-zinc-200">Browse services</h2>
       )}
       <p className="text-xs leading-relaxed text-zinc-500">
-        Search surfaces matching services and approved providers. Pick a service row
-        to see everyone who offers it, or open a provider line for their full
-        profile.
+        Each row is one provider for one service — multi-service providers can appear
+        more than once. Open a row for the full profile.
       </p>
       <div ref={wrapRef} className="relative">
         <label htmlFor={searchFieldId} className="sr-only">
@@ -176,26 +142,20 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
                 </ul>
               </div>
             ) : null}
-            {suggestionProviders.length > 0 ? (
+            {suggestionDiscovery.length > 0 ? (
               <div>
                 <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
                   Providers
                 </p>
                 <ul className="space-y-0.5">
-                  {suggestionProviders.map((p) => (
-                    <li key={p.slug}>
-                      <Link
-                        href={`/marketplace/providers/${p.slug}`}
-                        className="block rounded-lg px-2 py-2 text-sm text-zinc-200 hover:bg-zinc-900/80"
-                        onClick={() => setSuggestOpen(false)}
-                      >
-                        <span className="font-medium text-zinc-100">
-                          {p.displayName}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">
-                          {providerPreviewSubline(p, normalized)}
-                        </span>
-                      </Link>
+                  {suggestionDiscovery.map((card) => (
+                    <li key={`${card.providerSlug}::${card.serviceName}`}>
+                      <ProviderDiscoveryCard
+                        card={card}
+                        refreshVersion={reviewEpoch}
+                        variant="compact"
+                        onNavigate={() => setSuggestOpen(false)}
+                      />
                     </li>
                   ))}
                 </ul>

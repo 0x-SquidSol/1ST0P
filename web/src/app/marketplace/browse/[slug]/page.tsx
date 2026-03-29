@@ -8,6 +8,7 @@ import {
   allMarketplaceBrowseSlugs,
   getServiceNameFromBrowseSlug,
 } from "@/lib/marketplace-services";
+import { discoveryCardsForBrowse } from "@/lib/discovery-cards";
 import { listPublicProviders } from "@/lib/mock-providers";
 import { providersOfferingService } from "@/lib/provider-lanes";
 
@@ -33,6 +34,7 @@ export default async function MarketplaceServiceBrowsePage({ params }: Props) {
   if (!serviceName) notFound();
 
   const providers = providersOfferingService(listPublicProviders(), serviceName);
+  const cards = discoveryCardsForBrowse(providers, serviceName);
 
   return (
     <div className="min-w-0 space-y-8 sm:space-y-10">
@@ -53,13 +55,13 @@ export default async function MarketplaceServiceBrowsePage({ params }: Props) {
       </section>
 
       <section className="polish-surface-subtle rounded-3xl bg-zinc-950/38 p-4 sm:p-6">
-        {providers.length === 0 ? (
+        {cards.length === 0 ? (
           <p className="text-sm text-zinc-500">
             No approved providers in this category yet. When applications are
             accepted, they appear here automatically if they offer this service.
           </p>
         ) : (
-          <BrowseProvidersGrid providers={providers} />
+          <BrowseProvidersGrid cards={cards} />
         )}
       </section>
     </div>
