@@ -98,13 +98,14 @@ Notes:
 
 - Marketplace shell (`/marketplace`) with section tabs (service search, how-it-works, samples, FAQs)
 - Service search lists categories and live suggestions; each category links to **`/marketplace/browse/[slug]`** (providers offering that service)
-- Full provider profile / “ad” (`/marketplace/providers/[slug]`) — same template for every approved provider once applications drive data
+- Full provider profile / “ad” (`/marketplace/providers/[slug]`) — shared chrome for every approved provider once applications drive data; **up to three service columns** (1/2/3 wide on desktop) with per-service tags, rates, reviews, and header slots for Website / X / GitHub
 - Buyer hiring/work order flow
 - Milestone/timeboxed contract setup
 - Escrow and payout state views
 
 ### Marketplace Lane Rules
 
+- **Follow-up after provider application form (Phase 2):** the three service-column cards are intentionally generic today. Once intake captures **role/service selections and structured fields**, swing back and render **per-role (per-offering) column templates**—each column’s layout and fields should match what the applicant chose and submitted (see execution plan Phase 2 commit 6 → 7a). Until then, mock data demonstrates columns, scoped reviews, and social link slots only.
 - Provider applications are manually reviewed before listing.
 - Provider cards display:
   - average rating (/5)

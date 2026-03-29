@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listPublicProviders } from "@/lib/mock-providers";
+import { cardRateSummary } from "@/lib/provider-profile";
 
 export function ProviderSampleCards({ compact = false }: { compact?: boolean }) {
   const providers = listPublicProviders();
@@ -35,7 +36,7 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
                   {p.headline}
                 </span>
                 <span className="mt-2 text-[10px] font-medium text-zinc-600">
-                  {p.rateSummary}
+                  {cardRateSummary(p)}
                 </span>
                 <span className="mt-1.5 text-[10px] text-zinc-600">
                   View profile →
@@ -89,7 +90,7 @@ export function ProviderSampleCards({ compact = false }: { compact?: boolean }) 
                 {p.headline}
               </span>
               <span className="mt-auto pt-3 text-xs font-medium text-zinc-500">
-                {p.rateSummary}
+                {cardRateSummary(p)}
               </span>
               <span className="mt-2 text-xs text-zinc-600">
                 View profile →

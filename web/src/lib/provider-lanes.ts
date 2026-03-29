@@ -1,11 +1,13 @@
 import type { ProviderProfile } from "@/lib/provider-profile";
 
-/** Approved providers who list this exact service (skill) on their profile */
+/** Approved providers who list this exact service (offering) on their profile */
 export function providersOfferingService(
   approved: ProviderProfile[],
   serviceName: string,
 ): ProviderProfile[] {
-  return approved.filter((p) => p.skills.includes(serviceName));
+  return approved.filter((p) =>
+    p.offerings.some((o) => o.serviceName === serviceName),
+  );
 }
 
 /** Aligns with marketplace service category pills for [filter] consistency */
@@ -29,8 +31,8 @@ const SKILL_GROUP: Record<string, Exclude<ProviderBrowseScope, "All">> = {
 
 export function groupsForProvider(p: ProviderProfile): Set<Exclude<ProviderBrowseScope, "All">> {
   const g = new Set<Exclude<ProviderBrowseScope, "All">>();
-  for (const skill of p.skills) {
-    const gg = SKILL_GROUP[skill];
+  for (const o of p.offerings) {
+    const gg = SKILL_GROUP[o.serviceName];
     if (gg) g.add(gg);
   }
   return g;

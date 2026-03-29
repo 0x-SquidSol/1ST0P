@@ -10,35 +10,43 @@ import {
   type ServiceGroup,
 } from "@/lib/marketplace-services";
 import { listPublicProviders } from "@/lib/mock-providers";
-import type { ProviderProfile } from "@/lib/provider-profile";
+import {
+  formatReputationLine,
+  MARKETPLACE_REVIEWS_STORAGE_KEY,
+  MARKETPLACE_REVIEWS_UPDATED_EVENT,
+  reputationForProviderSlug,
+} from "@/lib/marketplace-reviews";
+import { type ProviderProfile, cardRateSummary } from "@/lib/provider-profile";
 
 type Scope = "All" | ServiceGroup;
 
 function providerSearchBlob(p: ProviderProfile): string {
-  return [p.displayName, p.headline, p.rateSummary, ...p.skills]
+  const fromOfferings = p.offerings.flatMap((o) => [
+    o.serviceName,
+    o.rateSummary,
+    ...o.tags,
+  ]);
+  return [p.displayName, p.headline, cardRateSummary(p), ...fromOfferings]
     .join(" ")
     .toLowerCase();
 }
 
 function primaryServiceForQuery(p: ProviderProfile, normalized: string): string {
   const q = normalized.trim();
-  if (!q) return p.skills[0] ?? "Services";
-  const hit = p.skills.find((s) => s.toLowerCase().includes(q));
-  return hit ?? p.skills[0] ?? "Services";
+  const names = p.offerings.map((o) => o.serviceName);
+  if (!q) return names[0] ?? "Services";
+  const hit = names.find((s) => s.toLowerCase().includes(q));
+  return hit ?? names[0] ?? "Services";
 }
 
-/** One line under the name: service · rating · reviews */
+/** One line under the name: service · merged reputation line */
 function providerPreviewSubline(p: ProviderProfile, normalized: string): string {
   const svc = primaryServiceForQuery(p, normalized);
-  const r = p.listingRating;
-  const n = p.reviewCount ?? 0;
-  const ratingPart =
-    r != null && n > 0
-      ? `${r.toFixed(1)} ★ · ${n} reviews`
-      : r != null
-        ? `${r.toFixed(1)} ★ · no reviews yet`
-        : "— · reviews after first job";
-  return `${svc} · ${ratingPart}`;
+  const rep = reputationForProviderSlug(p.slug, {
+    listingRating: p.listingRating,
+    reviewCount: p.reviewCount,
+  });
+  return `${svc} · ${formatReputationLine(rep)}`;
 }
 
 export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean }) {
@@ -49,6 +57,7 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
   const [query, setQuery] = useState(seedQuery);
   const [scope, setScope] = useState<Scope>("All");
   const [suggestOpen, setSuggestOpen] = useState(false);
+  const [reviewEpoch, setReviewEpoch] = useState(0);
   const normalized = query.trim().toLowerCase();
 
   const filteredServices = useMemo(
@@ -68,11 +77,12 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
 
   const suggestionProviders = useMemo(() => {
     if (normalized.length < 1) return [];
+    void reviewEpoch;
     const approved = listPublicProviders();
     return approved
       .filter((p) => providerSearchBlob(p).includes(normalized))
       .slice(0, 8);
-  }, [normalized]);
+  }, [normalized, reviewEpoch]);
 
   const showPanel =
     suggestOpen &&
@@ -87,6 +97,19 @@ export function MarketplaceDirectory({ embedded = false }: { embedded?: boolean 
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === MARKETPLACE_REVIEWS_STORAGE_KEY) setReviewEpoch((n) => n + 1);
+    };
+    const onCustom = () => setReviewEpoch((n) => n + 1);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MARKETPLACE_REVIEWS_UPDATED_EVENT, onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MARKETPLACE_REVIEWS_UPDATED_EVENT, onCustom);
+    };
   }, []);
 
   const onInputChange = useCallback((v: string) => {
