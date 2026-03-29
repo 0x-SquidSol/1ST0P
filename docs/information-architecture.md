@@ -37,7 +37,8 @@ This document maps the product requirements into concrete routing and UI structu
 #### Marketplace Context
 
 - **Removed from shell:** the marketplace lane uses a full-width primary layout on `/marketplace` and related routes. Discovery, provider samples, category search, and “How it works” live on the page—no left rail.
-- Provider application: `/marketplace/apply` (intake placeholder ahead of full form).
+- Provider application: `/marketplace/apply` (structured intake; **no required email** on the form).
+- **Messages / inbox (planned):** platform ↔ applicant (and later provider) **in-app threads** for application status and follow-ups; **admin dashboard** includes the operator view of all threads; **close / end conversation** to archive threads (declined applicants, spam, final decisions). Wallet hub (`Phase 2` commit 21) surfaces the user-side inbox when authenticated.
 
 #### Trade Context
 
@@ -102,6 +103,7 @@ Notes:
 - Buyer hiring/work order flow
 - Milestone/timeboxed contract setup
 - Escrow and payout state views
+- **Messages** (user inbox for application threads; ships with auth + admin queue — see execution plan Phase 2 **6b** / commit **7** / commit **21**)
 
 ### Marketplace Lane Rules
 

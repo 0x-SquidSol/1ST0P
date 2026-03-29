@@ -26,6 +26,17 @@ export const MARKETPLACE_SERVICES: MarketplaceServiceRow[] = [
   { name: "X Moderators", group: "Community" },
 ];
 
+/**
+ * When selected, applicant must fill `requestedServiceLabel` on the application payload.
+ * Reviewers map this to an existing catalog service or add a new marketplace category.
+ */
+export const OTHER_SERVICE_OPTION = "Other" as const;
+
+/** Canonical names applicants may pick without a custom label */
+export const CATALOG_SERVICE_NAME_SET = new Set(
+  MARKETPLACE_SERVICES.map((s) => s.name),
+);
+
 /** URL segment for `/marketplace/browse/[slug]` */
 export function serviceNameToSlug(name: string): string {
   return name
