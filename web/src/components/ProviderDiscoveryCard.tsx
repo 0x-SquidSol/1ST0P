@@ -12,12 +12,15 @@ export function ProviderDiscoveryCard({
   card,
   refreshVersion = 0,
   variant = "grid",
+  showListedBadge = false,
   onNavigate,
 }: {
   card: DiscoveryCardStatic;
   /** Bump when reviews in localStorage change (parent listens for storage / custom event). */
   refreshVersion?: number;
   variant?: Variant;
+  /** Public directory rows only: manual approval / listed on 1ST0P. */
+  showListedBadge?: boolean;
   onNavigate?: () => void;
 }) {
   const rep = useMemo(() => {
@@ -62,6 +65,17 @@ export function ProviderDiscoveryCard({
       >
         {card.serviceName}
       </span>
+      {showListedBadge ? (
+        <span
+          className={
+            variant === "compact" || variant === "sampleCompact"
+              ? "mt-1.5 inline-flex w-fit rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-200/90"
+              : "mt-2 inline-flex w-fit rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-200/90"
+          }
+        >
+          Listed on 1ST0P
+        </span>
+      ) : null}
       <div
         className={
           variant === "compact" || variant === "sampleCompact"

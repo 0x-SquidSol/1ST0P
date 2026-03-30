@@ -1,5 +1,6 @@
 import type { ProviderProfile, ProviderServiceOffering } from "@/lib/provider-profile";
 import { publicOfferings } from "@/lib/provider-profile";
+import { reputationForProviderService } from "@/lib/marketplace-reviews";
 
 /** One marketplace discovery row = one provider × one offered service (separate cards per service). */
 export type DiscoveryCardStatic = {
@@ -31,6 +32,35 @@ export function discoveryCardsForBrowse(
     if (o) out.push(toCard(p, o));
   }
   return out;
+}
+
+/**
+ * Buyer-facing browse order: higher average rating first, then more reviews,
+ * then display name (then slug) for stability. Uses merged seed + localStorage
+ * reviews on the client; on the server, user reviews are omitted (seed + profile fallbacks only).
+ */
+export function sortDiscoveryCardsByReputation(
+  cards: DiscoveryCardStatic[],
+): DiscoveryCardStatic[] {
+  return [...cards].sort((a, b) => {
+    const ra = reputationForProviderService(a.providerSlug, a.serviceName, {
+      listingRating: a.listingRating,
+      reviewCount: a.reviewCount,
+    });
+    const rb = reputationForProviderService(b.providerSlug, b.serviceName, {
+      listingRating: b.listingRating,
+      reviewCount: b.reviewCount,
+    });
+    const sa = ra.avgRating ?? 0;
+    const sb = rb.avgRating ?? 0;
+    if (sa !== sb) return sb - sa;
+    if (ra.reviewCount !== rb.reviewCount) return rb.reviewCount - ra.reviewCount;
+    const nameCmp = a.displayName.localeCompare(b.displayName, undefined, {
+      sensitivity: "base",
+    });
+    if (nameCmp !== 0) return nameCmp;
+    return a.providerSlug.localeCompare(b.providerSlug);
+  });
 }
 
 function offeringSearchBlob(p: ProviderProfile, o: ProviderServiceOffering): string {

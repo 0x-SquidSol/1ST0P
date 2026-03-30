@@ -8,7 +8,10 @@ import {
   allMarketplaceBrowseSlugs,
   getServiceNameFromBrowseSlug,
 } from "@/lib/marketplace-services";
-import { discoveryCardsForBrowse } from "@/lib/discovery-cards";
+import {
+  discoveryCardsForBrowse,
+  sortDiscoveryCardsByReputation,
+} from "@/lib/discovery-cards";
 import { listPublicProviders } from "@/lib/mock-providers";
 import { providersOfferingService } from "@/lib/provider-lanes";
 
@@ -34,7 +37,9 @@ export default async function MarketplaceServiceBrowsePage({ params }: Props) {
   if (!serviceName) notFound();
 
   const providers = providersOfferingService(listPublicProviders(), serviceName);
-  const cards = discoveryCardsForBrowse(providers, serviceName);
+  const cards = sortDiscoveryCardsByReputation(
+    discoveryCardsForBrowse(providers, serviceName),
+  );
 
   return (
     <div className="min-w-0 space-y-8 sm:space-y-10">

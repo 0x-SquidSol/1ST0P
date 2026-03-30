@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProviderDiscoveryCard } from "@/components/ProviderDiscoveryCard";
 import type { DiscoveryCardStatic } from "@/lib/discovery-cards";
+import { sortDiscoveryCardsByReputation } from "@/lib/discovery-cards";
 import {
   MARKETPLACE_REVIEWS_STORAGE_KEY,
   MARKETPLACE_REVIEWS_UPDATED_EVENT,
@@ -14,6 +15,11 @@ type Props = {
 
 export function BrowseProvidersGrid({ cards }: Props) {
   const [version, setVersion] = useState(0);
+
+  const orderedCards = useMemo(() => {
+    void version;
+    return sortDiscoveryCardsByReputation(cards);
+  }, [cards, version]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -30,12 +36,13 @@ export function BrowseProvidersGrid({ cards }: Props) {
 
   return (
     <ul className="grid min-w-0 gap-3 sm:grid-cols-2">
-      {cards.map((card) => (
+      {orderedCards.map((card) => (
         <li key={`${card.providerSlug}::${card.serviceName}`}>
           <ProviderDiscoveryCard
             card={card}
             refreshVersion={version}
             variant="grid"
+            showListedBadge
           />
         </li>
       ))}

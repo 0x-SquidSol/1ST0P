@@ -34,8 +34,8 @@ export function ProviderProfileView({ profile }: { profile: ProviderProfile }) {
             <ProviderHeaderSocial socialLinks={profile.socialLinks} />
           </div>
           <div className="flex flex-shrink-0 flex-wrap gap-2 lg:flex-col lg:items-end">
-            <span className="polish-pill rounded-lg px-3 py-1.5 text-xs text-zinc-200">
-              {profile.approved ? "Approved listing" : "Not listed"}
+            <span className="polish-pill rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-100/95">
+              {profile.approved ? "Listed on 1ST0P" : "Not listed"}
             </span>
             <span className="polish-pill rounded-lg px-3 py-1.5 text-xs text-zinc-400">
               Member since {since}

@@ -122,11 +122,13 @@ Give reviewers a single place to approve provider listings and, over time, **all
 - Staff dashboard lists provider applications with approve / reject / needs-info; approved applications become **public** provider profiles in the directory.
 - When no applications are in the queue (or for onboarding), the dashboard should still surface a **sample or pinned application row** (e.g. from the latest submission or explicit seed data) so reviewers see realistic layout and fields.
 - **Unified staff messaging** (same message primitives, **separate buckets** the operator selects): **applicant / intake threads**, **buyer–seller deal threads** (post-hire and engagement lifecycle), and **help / support threads** (when that product exists). Today’s applicant-only operator inbox may live at a separate URL until it is merged into the main staff dashboard.
+- **Staff chat access model:** everyone who can open the secured admin dashboard can use operator messaging there—**session / staff credentials only**, not wallet connection. Replies from staff appear to end users as coming from a **1ST0P representative** (single branded operator identity); individual staff accounts need not expose wallet addresses in-thread.
 
 ### Acceptance Criteria
 
 - Staff access is not exposed in public navigation; credentials are never committed to the repository.
 - Operators can distinguish application threads from deal threads from help threads once those lanes exist.
+- Operator messages sent from the dashboard are labeled or stored consistently as **1ST0P representative** (or equivalent product copy), independent of wallet linkage for staff.
 
 ## Lane 4: Buyer/Founder (View Services + Hire)
 
