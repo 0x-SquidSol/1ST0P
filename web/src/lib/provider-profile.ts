@@ -59,6 +59,8 @@ export type ProviderProfile = {
   approved: boolean;
   /** ISO date for “member since” style copy */
   memberSince: string;
+  /** Set when this listing was created from a provider application (admin approve). */
+  sourceApplicationId?: string;
   /**
    * Card / search preview when aggregating all services;
    * per-service fallbacks live on each offering.

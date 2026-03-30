@@ -36,6 +36,9 @@ yarn-error.log*
 !.env.example
 !.env*.example
 
+# Admin + local keys (visible name for editor search; still private)
+local-secrets.env
+
 # vercel
 .vercel
 

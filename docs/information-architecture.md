@@ -103,7 +103,10 @@ Notes:
 - Buyer hiring/work order flow
 - Milestone/timeboxed contract setup
 - Escrow and payout state views
-- **Messages** (user inbox for application threads; ships with auth + admin queue — see execution plan Phase 2 **6b** / commit **7** / commit **21**)
+- **Messages** (user inbox for application threads; ships with auth + admin queue); wallet hub surfaces the same threads for signed-in users when that ships.
+- **Admin** (`/admin`, staff): secured provider-application queue and approval → public listing; staff sign-in uses env vars documented in `web/.env.example` and **`web/local-secrets.example.env`** (real values only in gitignored **`local-secrets.env`**).
+  - **Roadmap — unified staff messaging:** fold operator-facing chat into this dashboard as **one messaging system** with **separate organized lanes** operators can switch between: **(1) applicant / provider-application conversations**, **(2) buyer–seller deal conversations** (hire, engagement, escrow), **(3) help / support** (when integrated). Interim applicant threads may stay on `/internal/messages` until merged.
+  - **Roadmap — queue UX:** list every real submission; when the queue is empty or for onboarding, show a **sample or pinned row** (e.g. latest submission snapshot or explicit seed) so reviewers always see how applications appear in the dashboard.
 
 ### Marketplace Lane Rules
 

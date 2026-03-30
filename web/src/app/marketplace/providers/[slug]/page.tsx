@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProviderProfileView } from "@/components/ProviderProfileView";
-import { getProviderBySlug, listPublicProviders } from "@/lib/mock-providers";
+import { getProviderBySlug } from "@/lib/mock-providers";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export async function generateStaticParams() {
-  return listPublicProviders().map((p) => ({ slug: p.slug }));
-}
+/** Approved listings from the admin queue are resolved at request time (in-memory store). */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
