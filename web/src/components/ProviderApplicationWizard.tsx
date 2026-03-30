@@ -80,6 +80,7 @@ export function ProviderApplicationWizard() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [done, setDone] = useState<{
     applicationId: string;
+    threadId: string;
     receivedAt: string;
   } | null>(null);
 
@@ -209,6 +210,7 @@ export function ProviderApplicationWizard() {
       const data = (await res.json()) as {
         error?: string;
         applicationId?: string;
+        threadId?: string;
         receivedAt?: string;
       };
       if (!res.ok) {
@@ -216,7 +218,11 @@ export function ProviderApplicationWizard() {
         return;
       }
       if (data.applicationId && data.receivedAt) {
-        setDone({ applicationId: data.applicationId, receivedAt: data.receivedAt });
+        setDone({
+          applicationId: data.applicationId,
+          threadId: data.threadId ?? "",
+          receivedAt: data.receivedAt,
+        });
       }
     } catch {
       setSubmitError("Network error — try again.");
@@ -232,16 +238,31 @@ export function ProviderApplicationWizard() {
           <PageHeader
             label="Marketplace"
             title="Application received"
-            description="This submission is tied to your connected wallet. Nothing appears on your public provider page or in marketplace search until an admin approves you in the internal dashboard. We will follow up in your on-platform Messages inbox when that ships (Phase 2 · 6b). For now this is a demo submit — data is not permanently stored."
+            description="This submission is tied to your connected wallet. Nothing appears on your public provider page or in marketplace search until an admin approves you in the internal dashboard. A Messages thread was created—open it with the same wallet (sign once to unlock). Dev data resets when the server restarts."
           />
           <p className="mt-4 font-mono text-xs text-zinc-500">
             Reference ID: {done.applicationId}
           </p>
+          {done.threadId ? (
+            <p className="mt-1 font-mono text-xs text-zinc-600">
+              Thread ID: {done.threadId}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-zinc-600">{done.receivedAt}</p>
           <p className="mt-6 flex flex-wrap gap-3">
             <Link
+              href={
+                done.threadId
+                  ? `/marketplace/messages/${done.threadId}`
+                  : "/marketplace/messages"
+              }
+              className="polish-cta-link inline-flex rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950"
+            >
+              Open Messages
+            </Link>
+            <Link
               href="/marketplace"
-              className="polish-cta-link inline-flex rounded-lg bg-zinc-900/85 px-4 py-2 text-sm text-zinc-100"
+              className="inline-flex rounded-lg border border-white/15 bg-zinc-900/85 px-4 py-2 text-sm text-zinc-100"
             >
               Back to marketplace
             </Link>
@@ -266,7 +287,7 @@ export function ProviderApplicationWizard() {
         <PageHeader
           label="Marketplace"
           title="Apply as a service provider"
-          description="Multi-step intake. Reviewers reach you through in-app Messages when that ships — no email on this form."
+          description="Multi-step intake. Reviewers reach you through in-app Messages (/marketplace/messages) — no email on this form."
         />
         <nav
           className="mt-5 flex flex-wrap gap-2 border-b border-white/[0.06] pb-4"

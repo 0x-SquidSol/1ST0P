@@ -1,21 +1,8 @@
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { addApplicationWithThread } from "@/lib/dev-marketplace-store";
 import {
   providerApplicationSchema,
-  type ProviderApplicationPayload,
 } from "@/lib/provider-application-schema";
-
-/** Dev-only in-memory store (resets on cold start; replace with DB in Phase 6). */
-const g = globalThis as unknown as {
-  __providerApplicationStore?: ProviderApplicationPayload[];
-};
-
-function getStore(): ProviderApplicationPayload[] {
-  if (!g.__providerApplicationStore) {
-    g.__providerApplicationStore = [];
-  }
-  return g.__providerApplicationStore;
-}
 
 export async function POST(req: Request) {
   let json: unknown;
@@ -36,20 +23,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const store = getStore();
-  if (store.length >= 500) {
-    store.shift();
-  }
-  store.push(parsed.data);
+  const { applicationId, threadId } = addApplicationWithThread(parsed.data);
 
-  const applicationId = randomUUID();
   return NextResponse.json(
     {
       applicationId,
+      threadId,
       receivedAt: new Date().toISOString(),
+      messagesUrl: "/marketplace/messages",
       demo: true,
       message:
-        "Application accepted (demo). Data is not durable—Phase 6 will persist. Use in-app Messages when 6b ships; no email required on the form.",
+        "Application accepted (demo). Open Messages with the same wallet to view your thread. Data resets on server restart until Phase 6 persistence.",
     },
     { status: 201 },
   );

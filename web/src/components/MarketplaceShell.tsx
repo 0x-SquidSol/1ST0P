@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 
@@ -10,12 +11,24 @@ import { ProviderSampleCards } from "@/components/ProviderSampleCards";
 
 type Panel = "search" | "how" | "profiles" | "faq";
 
-const NAV: { panel: Panel; label: string }[] = [
-  { panel: "search", label: "Service search" },
-  { panel: "how", label: "How it works" },
-  { panel: "profiles", label: "Sample profiles" },
-  { panel: "faq", label: "FAQs" },
+type NavEntry =
+  | { kind: "panel"; panel: Panel; label: string }
+  | { kind: "link"; href: string; label: string };
+
+const NAV: NavEntry[] = [
+  { kind: "panel", panel: "search", label: "Service search" },
+  { kind: "panel", panel: "how", label: "How it works" },
+  { kind: "panel", panel: "profiles", label: "Sample profiles" },
+  { kind: "link", href: "/marketplace/messages", label: "Messages" },
+  { kind: "panel", panel: "faq", label: "FAQs" },
 ];
+
+const navItemClass = (active: boolean) =>
+  `block w-full whitespace-nowrap text-left text-sm transition-colors max-lg:-mb-px max-lg:border-b-2 max-lg:px-2 max-lg:py-2 lg:rounded-md lg:px-2.5 lg:py-2.5 ${
+    active
+      ? "max-lg:border-zinc-400 text-zinc-100 lg:bg-zinc-900/55 lg:ring-1 lg:ring-white/[0.08]"
+      : "max-lg:border-transparent text-zinc-500 hover:text-zinc-300 lg:hover:bg-zinc-900/25"
+  }`;
 
 function panelFromParam(raw: string | null): Panel {
   if (raw === "how" || raw === "profiles" || raw === "faq") return raw;
@@ -59,6 +72,7 @@ function MarketplaceShellInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const messagesActive = pathname.startsWith("/marketplace/messages");
   const didHashMigrate = useRef(false);
 
   const panel = useMemo(
@@ -101,8 +115,22 @@ function MarketplaceShellInner() {
           role="tablist"
           className="flex flex-row gap-1 overflow-x-auto border-b border-white/[0.08] pb-3 [-webkit-overflow-scrolling:touch] lg:flex-col lg:gap-0 lg:border-b-0 lg:pb-0 lg:pt-1"
         >
-          {NAV.map(({ panel: id, label }) => {
-            const active = panel === id;
+          {NAV.map((entry) => {
+            if (entry.kind === "link") {
+              return (
+                <li key={entry.href} className="shrink-0 lg:shrink" role="presentation">
+                  <Link
+                    href={entry.href}
+                    className={navItemClass(messagesActive)}
+                    aria-current={messagesActive ? "page" : undefined}
+                  >
+                    {entry.label}
+                  </Link>
+                </li>
+              );
+            }
+            const id = entry.panel;
+            const active = !messagesActive && panel === id;
             return (
               <li key={id} className="shrink-0 lg:shrink" role="presentation">
                 <button
@@ -113,13 +141,9 @@ function MarketplaceShellInner() {
                   aria-controls="marketplace-panel"
                   tabIndex={active ? 0 : -1}
                   onClick={() => selectPanel(id)}
-                  className={`w-full whitespace-nowrap text-left text-sm transition-colors max-lg:-mb-px max-lg:border-b-2 max-lg:px-2 max-lg:py-2 lg:rounded-md lg:px-2.5 lg:py-2.5 ${
-                    active
-                      ? "max-lg:border-zinc-400 text-zinc-100 lg:bg-zinc-900/55 lg:ring-1 lg:ring-white/[0.08]"
-                      : "max-lg:border-transparent text-zinc-500 hover:text-zinc-300 lg:hover:bg-zinc-900/25"
-                  }`}
+                  className={navItemClass(active)}
                 >
-                  {label}
+                  {entry.label}
                 </button>
               </li>
             );
