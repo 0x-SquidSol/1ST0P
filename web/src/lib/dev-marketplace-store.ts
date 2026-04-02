@@ -228,6 +228,15 @@ export function getApprovedProfileBySlug(
   return approvedProfiles().find((p) => p.slug === slug);
 }
 
+/** Find all approved provider profiles for a wallet address. */
+export function getApprovedProfilesByWallet(wallet: string): ProviderProfile[] {
+  return approvedProfiles().filter((p) => {
+    if (!p.sourceApplicationId) return false;
+    const app = getApplicationById(p.sourceApplicationId);
+    return app?.payload.applicantWallet === wallet;
+  });
+}
+
 export function getProviderWalletForSlug(slug: string): string | null {
   const p = getApprovedProfileBySlug(slug);
   if (!p?.sourceApplicationId) return null;

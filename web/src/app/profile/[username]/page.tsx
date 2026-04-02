@@ -5,6 +5,14 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 
+type Listing = {
+  slug: string;
+  displayName: string;
+  headline: string;
+  services: string[];
+  approved: boolean;
+};
+
 type ProfileData = {
   wallet: string;
   username: string;
@@ -14,7 +22,7 @@ type ProfileData = {
     completedDeals: number;
     totalDeals: number;
   };
-  provider: { slug: string; displayName: string } | null;
+  listings: Listing[];
 };
 
 export default function PublicProfilePage() {
@@ -26,13 +34,11 @@ export default function PublicProfilePage() {
   const load = useCallback(async () => {
     if (!username) return;
     setErr(null);
-    // First resolve username → wallet
     const lookupRes = await fetch(`/api/profile/lookup?username=${encodeURIComponent(username)}`);
     if (lookupRes.status === 404) { setErr("User not found."); return; }
     if (!lookupRes.ok) { setErr("Could not load profile."); return; }
     const lookup = (await lookupRes.json()) as { wallet: string };
 
-    // Then get full profile
     const res = await fetch(`/api/profile/${lookup.wallet}`);
     if (!res.ok) { setErr("Could not load profile."); return; }
     const data = (await res.json()) as ProfileData;
@@ -72,16 +78,56 @@ export default function PublicProfilePage() {
               <StatCard label="Total Deals" value={profile.stats.totalDeals} />
             </div>
 
-            {/* Provider link */}
-            {profile.provider && (
+            {/* Provider listings */}
+            {profile.listings.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Service Provider Listings
+                </p>
+                {profile.listings.map((listing) => (
+                  <div
+                    key={listing.slug}
+                    className="rounded-xl border border-white/[0.08] bg-zinc-950/45 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Link
+                          href={`/marketplace/providers/${listing.slug}`}
+                          className="text-sm font-medium text-zinc-100 underline decoration-white/20 underline-offset-2 hover:text-white"
+                        >
+                          {listing.displayName}
+                        </Link>
+                        <p className="mt-1 text-xs text-zinc-500">{listing.headline}</p>
+                        {listing.services.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {listing.services.map((s) => (
+                              <span
+                                key={s}
+                                className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] text-zinc-400"
+                              >
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {listing.approved && (
+                        <span className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+                          Approved
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* No listings */}
+            {profile.listings.length === 0 && (
               <div className="rounded-xl border border-white/[0.08] bg-zinc-950/45 p-4">
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">Service Provider</p>
-                <Link
-                  href={`/marketplace/providers/${profile.provider.slug}`}
-                  className="text-sm text-violet-400 underline underline-offset-2 hover:text-violet-300"
-                >
-                  {profile.provider.displayName} →
-                </Link>
+                <p className="text-sm text-zinc-500">
+                  This user is not a registered service provider.
+                </p>
               </div>
             )}
           </div>
