@@ -7,10 +7,10 @@ import {
 } from "@/lib/messages-session-cookie";
 import {
   createDealThread,
-  getApprovedProfileBySlug,
   getProviderWalletForSlug,
   listDealThreadsForWallet,
 } from "@/lib/dev-marketplace-store";
+import { getProviderBySlug } from "@/lib/mock-providers";
 import { publicOfferings } from "@/lib/provider-profile";
 
 const createDealSchema = z.object({
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 422 });
   }
 
-  const profile = getApprovedProfileBySlug(parsed.data.providerSlug);
+  const profile = getProviderBySlug(parsed.data.providerSlug);
   if (!profile || !profile.approved) {
     return NextResponse.json({ error: "Provider not available" }, { status: 404 });
   }
@@ -85,7 +85,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Service not listed by provider" }, { status: 422 });
   }
 
-  const providerWallet = getProviderWalletForSlug(parsed.data.providerSlug);
+  // Real approved providers have a linked wallet; mock providers use a placeholder
+  const providerWallet =
+    getProviderWalletForSlug(parsed.data.providerSlug) ??
+    (profile.sourceApplicationId ? null : `mock-provider-${profile.slug}`);
   if (!providerWallet) {
     return NextResponse.json(
       { error: "Provider wallet is not linked yet" },
