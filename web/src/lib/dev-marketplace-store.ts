@@ -119,6 +119,12 @@ export type StoredApplication = {
   approvedAt?: string;
 };
 
+export type UserProfile = {
+  wallet: string;
+  username: string;
+  createdAt: string;
+};
+
 /**
  * /tmp file-backed persistence so all Vercel serverless functions
  * share the same data within a warm execution environment.
@@ -132,6 +138,7 @@ const DEALS_FILE = tmpPath("deals.json");
 const APPS_FILE = tmpPath("apps.json");
 const THREADS_FILE = tmpPath("threads.json");
 const PROFILES_FILE = tmpPath("profiles.json");
+const USERS_FILE = tmpPath("users.json");
 
 function readJsonFile<T>(filePath: string): T | null {
   if (!isServer) return null;
@@ -163,6 +170,7 @@ const g = globalThis as unknown as {
   __1st0pThreads?: ApplicationThread[];
   __1st0pApprovedProfiles?: ProviderProfile[];
   __1st0pDeals?: DealThread[];
+  __1st0pUsers?: UserProfile[];
 };
 
 function applications(): StoredApplication[] {
@@ -194,12 +202,20 @@ function deals(): DealThread[] {
   return g.__1st0pDeals;
 }
 
+function users(): UserProfile[] {
+  const fromDisk = readJsonFile<UserProfile[]>(USERS_FILE);
+  if (fromDisk) { g.__1st0pUsers = fromDisk; }
+  if (!g.__1st0pUsers) g.__1st0pUsers = [];
+  return g.__1st0pUsers;
+}
+
 /** Flush all in-memory state to /tmp after every mutation. */
 function flush() {
   writeJsonFile(DEALS_FILE, g.__1st0pDeals ?? []);
   writeJsonFile(APPS_FILE, g.__1st0pApplications ?? []);
   writeJsonFile(THREADS_FILE, g.__1st0pThreads ?? []);
   writeJsonFile(PROFILES_FILE, g.__1st0pApprovedProfiles ?? []);
+  writeJsonFile(USERS_FILE, g.__1st0pUsers ?? []);
 }
 
 export function listApprovedApplicationProfiles(): ProviderProfile[] {
@@ -668,4 +684,65 @@ export function signAgreement(
 /** List all deals (admin dashboard). */
 export function listAllDeals(): DealThread[] {
   return [...deals()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+}
+
+/* ------------------------------------------------------------------ */
+/*  User profiles (wallet-scoped identity)                             */
+/* ------------------------------------------------------------------ */
+
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+
+/** Claim a username for a wallet. One-time only — cannot be changed. */
+export function claimUsername(
+  wallet: string,
+  username: string,
+): UserProfile | { error: string } {
+  const trimmed = username.trim();
+  if (!USERNAME_RE.test(trimmed)) {
+    return { error: "Username must be 3-20 characters, letters/numbers/underscores only." };
+  }
+  const lower = trimmed.toLowerCase();
+
+  // Check if wallet already has a username (permanent — no changes)
+  const existing = users().find((u) => u.wallet === wallet);
+  if (existing) {
+    return { error: "You already have a username. Usernames are permanent." };
+  }
+
+  // Check uniqueness (case-insensitive)
+  const taken = users().find((u) => u.username.toLowerCase() === lower);
+  if (taken) {
+    return { error: "Username is already taken." };
+  }
+
+  const profile: UserProfile = {
+    wallet,
+    username: trimmed,
+    createdAt: new Date().toISOString(),
+  };
+  users().push(profile);
+  flush();
+  return profile;
+}
+
+/** Get a user profile by wallet address. */
+export function getUserByWallet(wallet: string): UserProfile | undefined {
+  return users().find((u) => u.wallet === wallet);
+}
+
+/** Get a user profile by username. */
+export function getUserByUsername(username: string): UserProfile | undefined {
+  const lower = username.toLowerCase();
+  return users().find((u) => u.username.toLowerCase() === lower);
+}
+
+/** Resolve a wallet to a display name (username or shortened wallet). */
+export function resolveDisplayName(wallet: string): string {
+  const user = getUserByWallet(wallet);
+  return user ? user.username : `${wallet.slice(0, 4)}..${wallet.slice(-4)}`;
+}
+
+/** List all user profiles (admin). */
+export function listAllUsers(): UserProfile[] {
+  return [...users()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

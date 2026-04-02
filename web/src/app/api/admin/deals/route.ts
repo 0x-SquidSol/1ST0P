@@ -4,7 +4,7 @@ import {
   ADMIN_AUTH_COOKIE,
   readAdminSession,
 } from "@/lib/admin-session-cookie";
-import { listAllDeals } from "@/lib/dev-marketplace-store";
+import { listAllDeals, resolveDisplayName } from "@/lib/dev-marketplace-store";
 import { shortenWallet } from "@/lib/marketplace-reviews";
 
 export async function GET() {
@@ -20,7 +20,9 @@ export async function GET() {
     providerSlug: d.providerSlug,
     serviceName: d.serviceName,
     buyerWallet: shortenWallet(d.buyerWallet, 6),
+    buyerName: resolveDisplayName(d.buyerWallet),
     providerWallet: shortenWallet(d.providerWallet, 6),
+    providerName: resolveDisplayName(d.providerWallet),
     status: d.status,
     serviceType: d.agreement?.serviceType ?? "(no contract yet)",
     totalSol: d.agreement?.totalCostSol ?? 0,

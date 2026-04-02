@@ -7,6 +7,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import bs58 from "bs58";
 import { loginMessageText } from "@/lib/verify-wallet-sign-message";
 import { PageHeader } from "@/components/PageHeader";
+import { UsernameClaimModal } from "@/components/UsernameClaimModal";
 
 export default function HireProviderPage() {
   const params = useParams();
@@ -19,6 +20,8 @@ export default function HireProviderPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [autoStarted, setAutoStarted] = useState(false);
+  const [needsUsername, setNeedsUsername] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
   async function ensureSession(): Promise<boolean> {
     const check = await fetch("/api/messages/threads", { credentials: "include" });
@@ -47,13 +50,38 @@ export default function HireProviderPage() {
     return true;
   }
 
-  async function startDeal() {
+  async function checkUsernameAndStart() {
     if (!slug || !serviceName) { setErr("Missing provider or service."); return; }
     setBusy(true);
     setErr(null);
     try {
       const ok = await ensureSession();
       if (!ok) return;
+      setSessionReady(true);
+
+      // Check if user has a username
+      const profileRes = await fetch("/api/profile/username", { credentials: "include" });
+      if (profileRes.ok) {
+        const data = (await profileRes.json()) as { username: string | null };
+        if (!data.username) {
+          setNeedsUsername(true);
+          setBusy(false);
+          return;
+        }
+      }
+
+      await createDeal();
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : "Network error.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createDeal() {
+    setBusy(true);
+    setErr(null);
+    try {
       const res = await fetch("/api/marketplace/deals", {
         method: "POST",
         credentials: "include",
@@ -76,9 +104,9 @@ export default function HireProviderPage() {
 
   // Auto-start if wallet is connected
   useEffect(() => {
-    if (connected && publicKey && slug && serviceName && !autoStarted && !busy) {
+    if (connected && publicKey && slug && serviceName && !autoStarted && !busy && !needsUsername) {
       setAutoStarted(true);
-      void startDeal();
+      void checkUsernameAndStart();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, publicKey, slug, serviceName]);
@@ -88,20 +116,19 @@ export default function HireProviderPage() {
       <section className="polish-surface-page max-w-full min-w-0 rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader
           label="Marketplace"
-          title="Starting deal chat…"
-          description="Connecting you with the provider. You'll discuss terms and draft an agreement together."
+          title={needsUsername ? "Set your username" : "Starting deal chat…"}
+          description={needsUsername
+            ? "Choose a permanent username before starting your first deal."
+            : "Connecting you with the provider. You'll discuss terms and draft a contract together."
+          }
         />
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <Link
-            href={`/marketplace/providers/${slug}`}
-            className="text-zinc-400 underline decoration-white/20 underline-offset-4 hover:text-zinc-200"
-          >
+          <Link href={`/marketplace/providers/${slug}`}
+            className="text-zinc-400 underline decoration-white/20 underline-offset-4 hover:text-zinc-200">
             ← Back to provider profile
           </Link>
-          <Link
-            href="/marketplace/deals"
-            className="text-zinc-500 underline decoration-white/15 underline-offset-4 hover:text-zinc-300"
-          >
+          <Link href="/marketplace/deals"
+            className="text-zinc-500 underline decoration-white/15 underline-offset-4 hover:text-zinc-300">
             My deal chats
           </Link>
         </div>
@@ -111,27 +138,28 @@ export default function HireProviderPage() {
         {busy ? (
           <p className="text-sm text-zinc-400">Creating deal chat…</p>
         ) : !connected ? (
-          <div className="space-y-3">
-            <p className="text-sm text-zinc-400">
-              Connect your wallet in the header to start a deal chat.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {!autoStarted && (
-              <button
-                type="button"
-                onClick={() => void startDeal()}
-                disabled={busy}
-                className="rounded-lg border border-white/20 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:opacity-40"
-              >
-                Start deal chat
-              </button>
-            )}
-          </div>
-        )}
+          <p className="text-sm text-zinc-400">
+            Connect your wallet in the header to start a deal chat.
+          </p>
+        ) : !autoStarted && !needsUsername ? (
+          <button type="button" onClick={() => void checkUsernameAndStart()} disabled={busy}
+            className="rounded-lg border border-white/20 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:opacity-40">
+            Start deal chat
+          </button>
+        ) : null}
         {err && <p className="mt-3 text-sm text-red-400">{err}</p>}
       </section>
+
+      {/* Username claim modal — required before deal creation */}
+      {needsUsername && sessionReady && (
+        <UsernameClaimModal
+          required
+          onClaimed={() => {
+            setNeedsUsername(false);
+            void createDeal();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { AgreementModal } from "@/components/AgreementModal";
 type DealApi = {
   deal: DealThread;
   participantRole: "buyer" | "provider";
+  displayNames?: { buyer: string; provider: string };
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -45,6 +46,7 @@ export default function DealThreadPage() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
+  const [names, setNames] = useState<{ buyer: string; provider: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!dealId) return;
@@ -56,6 +58,7 @@ export default function DealThreadPage() {
     const data = (await res.json()) as DealApi;
     setDeal(data.deal);
     setRole(data.participantRole);
+    if (data.displayNames) setNames(data.displayNames);
   }, [dealId, router]);
 
   useEffect(() => { void load(); }, [load]);
@@ -219,8 +222,8 @@ export default function DealThreadPage() {
                   <div className={bubbleClass(m.authorRole)}>
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
                     <p className="mt-2 text-[0.65rem] uppercase tracking-wider text-zinc-500">
-                      {m.authorRole === "buyer" ? "Buyer"
-                        : m.authorRole === "provider" ? "Provider"
+                      {m.authorRole === "buyer" ? (names?.buyer ?? "Buyer")
+                        : m.authorRole === "provider" ? (names?.provider ?? "Provider")
                         : m.authorRole === "operator" ? "1ST0P" : "System"}{" "}
                       · {new Date(m.createdAt).toLocaleString()}
                     </p>

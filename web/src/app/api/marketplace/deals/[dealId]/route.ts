@@ -6,6 +6,7 @@ import {
 } from "@/lib/messages-session-cookie";
 import {
   getDealThreadById,
+  resolveDisplayName,
   setDealStatus,
 } from "@/lib/dev-marketplace-store";
 
@@ -32,6 +33,10 @@ export async function GET(_req: Request, ctx: RouteCtx) {
   return NextResponse.json({
     deal,
     participantRole: deal.buyerWallet === session.wallet ? "buyer" : "provider",
+    displayNames: {
+      buyer: resolveDisplayName(deal.buyerWallet),
+      provider: resolveDisplayName(deal.providerWallet),
+    },
   });
 }
 
