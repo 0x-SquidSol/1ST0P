@@ -6,6 +6,7 @@ import {
 import type { ProviderApplicationPayload } from "@/lib/provider-application-schema";
 import { MOCK_PROVIDERS_DATA } from "@/lib/mock-providers-data";
 import type { ProviderProfile } from "@/lib/provider-profile";
+import { computeFeeBreakdown } from "@/lib/marketplace-fees";
 
 /**
  * Dev-only in-memory persistence (resets on cold start).
@@ -41,7 +42,11 @@ export type DealReviewStatus =
   | "proposed"
   | "changes_requested"
   | "accepted"
-  | "declined";
+  | "declined"
+  | "agreement_pending"
+  | "active"
+  | "completed"
+  | "disputed";
 
 export type DealMessageAuthorRole = "system" | "buyer" | "provider" | "operator";
 
@@ -52,12 +57,19 @@ export type DealMessage = {
   createdAt: string;
 };
 
+export type MilestoneEscrowStatus =
+  | "pending"
+  | "in_progress"
+  | "released"
+  | "disputed";
+
 export type DealMilestone = {
   id: string;
   title: string;
   deliverable: string;
   amountSol: number;
   dueDate: string;
+  escrowStatus: MilestoneEscrowStatus;
 };
 
 export type DealProposal = {
@@ -69,6 +81,18 @@ export type DealProposal = {
   milestones: DealMilestone[];
 };
 
+export type DealAgreement = {
+  buyerSignedAt: string | null;
+  providerSignedAt: string | null;
+  feeSnapshot: {
+    serviceTotalSol: number;
+    platformFeeSol: number;
+    totalReleaseFeeSol: number;
+    estimatedNetworkFeeSol: number;
+    grandTotalSol: number;
+  };
+};
+
 export type DealThread = {
   id: string;
   providerSlug: string;
@@ -78,6 +102,7 @@ export type DealThread = {
   providerWallet: string;
   status: DealReviewStatus;
   proposal: DealProposal;
+  agreement: DealAgreement | null;
   messages: DealMessage[];
   createdAt: string;
   updatedAt: string;
@@ -335,6 +360,7 @@ export function createDealThread(input: {
     providerWallet: input.providerWallet,
     status: "proposed",
     proposal: input.proposal,
+    agreement: null,
     messages: [
       {
         id: randomUUID(),
@@ -387,4 +413,144 @@ export function setDealStatus(
   d.status = status;
   d.updatedAt = new Date().toISOString();
   return d;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Agreement + escrow helpers                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Move an accepted deal into agreement_pending and snapshot fees.
+ * Called when the provider accepts — both parties must then sign.
+ */
+export function initAgreement(
+  dealId: string,
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "accepted") return { error: "deal must be accepted first" };
+
+  const amounts = d.proposal.milestones.map((m) => m.amountSol);
+  const fb = computeFeeBreakdown(amounts);
+
+  d.agreement = {
+    buyerSignedAt: null,
+    providerSignedAt: null,
+    feeSnapshot: {
+      serviceTotalSol: fb.serviceTotalSol,
+      platformFeeSol: fb.platformFeeSol,
+      totalReleaseFeeSol: fb.totalReleaseFeeSol,
+      estimatedNetworkFeeSol: fb.estimatedNetworkFeeSol,
+      grandTotalSol: fb.grandTotalSol,
+    },
+  };
+  d.status = "agreement_pending";
+  d.updatedAt = new Date().toISOString();
+
+  // Set all milestones to pending escrow
+  for (const m of d.proposal.milestones) {
+    m.escrowStatus = "pending";
+  }
+
+  appendDealMessage(dealId, "system" as never, "");
+  // Replace the empty message with a proper system message
+  const sysMsg = d.messages[d.messages.length - 1];
+  if (sysMsg) {
+    sysMsg.authorRole = "system";
+    sysMsg.body =
+      "Provider accepted the proposal. Both parties must now review and sign the agreement before work begins.";
+  }
+
+  return d;
+}
+
+/**
+ * Record a party's signature on the agreement.
+ * When both have signed → status becomes "active".
+ */
+export function signAgreement(
+  dealId: string,
+  role: "buyer" | "provider",
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "agreement_pending") return { error: "no pending agreement" };
+  if (!d.agreement) return { error: "agreement not initialized" };
+
+  const now = new Date().toISOString();
+
+  if (role === "buyer") {
+    if (d.agreement.buyerSignedAt) return { error: "buyer already signed" };
+    d.agreement.buyerSignedAt = now;
+  } else {
+    if (d.agreement.providerSignedAt) return { error: "provider already signed" };
+    d.agreement.providerSignedAt = now;
+  }
+
+  d.updatedAt = now;
+
+  // Both signed → activate + prompt buyer for payment
+  if (d.agreement.buyerSignedAt && d.agreement.providerSignedAt) {
+    d.status = "active";
+    const sysMsg: DealMessage = {
+      id: randomUUID(),
+      authorRole: "system",
+      body: "Both parties signed the agreement. Buyer: please fund the escrow to begin work.",
+      createdAt: now,
+    };
+    d.messages.push(sysMsg);
+  } else {
+    const who = role === "buyer" ? "Buyer" : "Provider";
+    const sysMsg: DealMessage = {
+      id: randomUUID(),
+      authorRole: "system",
+      body: `${who} signed the agreement. Waiting for the other party.`,
+      createdAt: now,
+    };
+    d.messages.push(sysMsg);
+  }
+
+  return d;
+}
+
+/**
+ * Update a milestone's escrow status (e.g. pending → in_progress → released).
+ */
+export function updateMilestoneEscrow(
+  dealId: string,
+  milestoneId: string,
+  escrowStatus: MilestoneEscrowStatus,
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "active" && d.status !== "disputed")
+    return { error: "deal must be active" };
+
+  const m = d.proposal.milestones.find((ms) => ms.id === milestoneId);
+  if (!m) return { error: "milestone not found" };
+
+  m.escrowStatus = escrowStatus;
+  d.updatedAt = new Date().toISOString();
+
+  // If all milestones released → mark deal completed
+  const allReleased = d.proposal.milestones.every(
+    (ms) => ms.escrowStatus === "released",
+  );
+  if (allReleased) {
+    d.status = "completed";
+    const sysMsg: DealMessage = {
+      id: randomUUID(),
+      authorRole: "system",
+      body: "All milestones released. This engagement is now complete.",
+      createdAt: d.updatedAt,
+    };
+    d.messages.push(sysMsg);
+  }
+
+  return d;
+}
+
+/** List all deals (for admin dashboard). */
+export function listAllDeals(): DealThread[] {
+  return [...deals()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 }

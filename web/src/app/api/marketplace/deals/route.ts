@@ -64,6 +64,7 @@ function normalizeMilestones(input: z.infer<typeof milestoneSchema>[]): DealMile
     deliverable: m.deliverable,
     amountSol: m.amountSol,
     dueDate: m.dueDate,
+    escrowStatus: "pending" as const,
   }));
 }
 

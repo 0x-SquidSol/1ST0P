@@ -8,6 +8,7 @@ import {
 import {
   appendDealMessage,
   getDealThreadById,
+  initAgreement,
   setDealStatus,
   type DealReviewStatus,
 } from "@/lib/dev-marketplace-store";
@@ -97,6 +98,11 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     "provider",
     parsed.data.note ? parsed.data.note : defaultNote,
   );
+
+  // When provider accepts → automatically init the agreement flow
+  if (parsed.data.status === "accepted") {
+    initAgreement(dealId);
+  }
 
   return NextResponse.json({
     deal: getDealThreadById(dealId),

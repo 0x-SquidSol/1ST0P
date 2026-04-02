@@ -17,6 +17,22 @@ type AppRow = {
   applicantWallet: string;
 };
 
+type DealRow = {
+  id: string;
+  providerDisplayName: string;
+  providerSlug: string;
+  serviceName: string;
+  buyerWallet: string;
+  providerWallet: string;
+  status: string;
+  projectTitle: string;
+  milestoneCount: number;
+  totalSol: number;
+  agreementSigned: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export default function AdminPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -26,6 +42,8 @@ export default function AdminPage() {
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [apps, setApps] = useState<AppRow[]>([]);
+  const [deals, setDeals] = useState<DealRow[]>([]);
+  const [tab, setTab] = useState<"applications" | "contracts">("applications");
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
 
@@ -44,6 +62,13 @@ export default function AdminPage() {
     setApps(data.applications);
   }, []);
 
+  const refreshDeals = useCallback(async () => {
+    const res = await fetch("/api/admin/deals", { credentials: "include" });
+    if (!res.ok) return;
+    const data = (await res.json()) as { deals: DealRow[] };
+    setDeals(data.deals);
+  }, []);
+
   useEffect(() => {
     void (async () => {
       const cfg = await fetch("/api/admin/config");
@@ -53,9 +78,12 @@ export default function AdminPage() {
       const s = await fetch("/api/admin/session", { credentials: "include" });
       setAuthenticated(s.ok);
       setAuthChecked(true);
-      if (s.ok) await refreshApps();
+      if (s.ok) {
+        await refreshApps();
+        await refreshDeals();
+      }
     })();
-  }, [refreshApps]);
+  }, [refreshApps, refreshDeals]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -206,6 +234,15 @@ export default function AdminPage() {
     );
   }
 
+  function dealStatusColor(s: string): string {
+    if (s === "active") return "bg-emerald-500/15 text-emerald-200";
+    if (s === "completed") return "bg-emerald-500/25 text-emerald-100";
+    if (s === "agreement_pending") return "bg-amber-500/15 text-amber-200";
+    if (s === "disputed") return "bg-red-500/15 text-red-200";
+    if (s === "declined") return "bg-red-500/10 text-red-300";
+    return "bg-zinc-500/15 text-zinc-300";
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -214,15 +251,18 @@ export default function AdminPage() {
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-amber-400/90">
               Staff
             </p>
-            <h1 className="mt-2 text-2xl font-semibold">Provider applications</h1>
+            <h1 className="mt-2 text-2xl font-semibold">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Approve to publish a public profile. Data is in-memory until you add a database.
+              Provider applications and marketplace contracts. Data is in-memory until you add a database.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => void refreshApps()}
+              onClick={() => {
+                void refreshApps();
+                void refreshDeals();
+              }}
               className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-900"
             >
               Refresh
@@ -237,109 +277,214 @@ export default function AdminPage() {
           </div>
         </header>
 
+        {/* Tabs */}
+        <div className="flex gap-1 rounded-xl border border-white/10 bg-zinc-900/40 p-1">
+          <button
+            type="button"
+            onClick={() => setTab("applications")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "applications"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Applications ({apps.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("contracts")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "contracts"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Contracts ({deals.length})
+          </button>
+        </div>
+
         {loadErr ? (
           <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
             {loadErr}
           </p>
         ) : null}
 
-        {apps.length === 0 ? (
-          <p className="text-sm text-zinc-500">No applications in the queue yet.</p>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
-                  <th className="p-3 font-medium">Submitted</th>
-                  <th className="p-3 font-medium">Listing</th>
-                  <th className="p-3 font-medium">Wallet</th>
-                  <th className="p-3 font-medium">Status</th>
-                  <th className="p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {apps.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20"
-                  >
-                    <td className="p-3 text-xs text-zinc-500">
-                      {new Date(a.submittedAt).toLocaleString()}
-                    </td>
-                    <td className="p-3">
-                      <div className="font-medium text-zinc-200">{a.displayName}</div>
-                      <div className="mt-1 line-clamp-2 text-xs text-zinc-500">
-                        {a.headline}
-                      </div>
-                      {a.publicSlug ? (
-                        <Link
-                          href={`/marketplace/providers/${a.publicSlug}`}
-                          className="mt-2 inline-block text-xs text-violet-400 underline underline-offset-2 hover:text-violet-300"
-                        >
-                          View public profile →
-                        </Link>
-                      ) : null}
-                    </td>
-                    <td className="p-3 font-mono text-xs text-zinc-500">
-                      {shortenWallet(a.applicantWallet, 6)}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`inline-block rounded-md px-2 py-0.5 text-xs ${
-                          a.reviewStatus === "approved"
-                            ? "bg-emerald-500/15 text-emerald-200"
-                            : a.reviewStatus === "rejected"
-                              ? "bg-red-500/15 text-red-200/90"
-                              : a.reviewStatus === "needs_info"
-                                ? "bg-amber-500/15 text-amber-200/90"
-                                : "bg-zinc-500/15 text-zinc-300"
-                        }`}
+        {/* ── Applications tab ── */}
+        {tab === "applications" ? (
+          <>
+            {apps.length === 0 ? (
+              <p className="text-sm text-zinc-500">No applications in the queue yet.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-white/10">
+                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                      <th className="p-3 font-medium">Submitted</th>
+                      <th className="p-3 font-medium">Listing</th>
+                      <th className="p-3 font-medium">Wallet</th>
+                      <th className="p-3 font-medium">Status</th>
+                      <th className="p-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {apps.map((a) => (
+                      <tr
+                        key={a.id}
+                        className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20"
                       >
-                        {a.reviewStatus}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          type="button"
-                          disabled={actionId === a.id || a.reviewStatus === "approved"}
-                          onClick={() => void runAction(a.id, "approve")}
-                          className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200 disabled:opacity-40"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionId === a.id}
-                          onClick={() => void runAction(a.id, "needs_info")}
-                          className="rounded border border-amber-500/25 px-2 py-1 text-xs text-amber-200/90 disabled:opacity-40"
-                        >
-                          Needs info
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionId === a.id}
-                          onClick={() => void runAction(a.id, "pending")}
-                          className="rounded border border-white/10 px-2 py-1 text-xs text-zinc-400 disabled:opacity-40"
-                        >
-                          Mark pending
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionId === a.id}
-                          onClick={() => void runAction(a.id, "reject")}
-                          className="rounded border border-red-500/25 bg-red-500/10 px-2 py-1 text-xs text-red-200/90 disabled:opacity-40"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                        <td className="p-3 text-xs text-zinc-500">
+                          {new Date(a.submittedAt).toLocaleString()}
+                        </td>
+                        <td className="p-3">
+                          <div className="font-medium text-zinc-200">{a.displayName}</div>
+                          <div className="mt-1 line-clamp-2 text-xs text-zinc-500">
+                            {a.headline}
+                          </div>
+                          {a.publicSlug ? (
+                            <Link
+                              href={`/marketplace/providers/${a.publicSlug}`}
+                              className="mt-2 inline-block text-xs text-violet-400 underline underline-offset-2 hover:text-violet-300"
+                            >
+                              View public profile →
+                            </Link>
+                          ) : null}
+                        </td>
+                        <td className="p-3 font-mono text-xs text-zinc-500">
+                          {shortenWallet(a.applicantWallet, 6)}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`inline-block rounded-md px-2 py-0.5 text-xs ${
+                              a.reviewStatus === "approved"
+                                ? "bg-emerald-500/15 text-emerald-200"
+                                : a.reviewStatus === "rejected"
+                                  ? "bg-red-500/15 text-red-200/90"
+                                  : a.reviewStatus === "needs_info"
+                                    ? "bg-amber-500/15 text-amber-200/90"
+                                    : "bg-zinc-500/15 text-zinc-300"
+                            }`}
+                          >
+                            {a.reviewStatus}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              type="button"
+                              disabled={actionId === a.id || a.reviewStatus === "approved"}
+                              onClick={() => void runAction(a.id, "approve")}
+                              className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200 disabled:opacity-40"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionId === a.id}
+                              onClick={() => void runAction(a.id, "needs_info")}
+                              className="rounded border border-amber-500/25 px-2 py-1 text-xs text-amber-200/90 disabled:opacity-40"
+                            >
+                              Needs info
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionId === a.id}
+                              onClick={() => void runAction(a.id, "pending")}
+                              className="rounded border border-white/10 px-2 py-1 text-xs text-zinc-400 disabled:opacity-40"
+                            >
+                              Mark pending
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionId === a.id}
+                              onClick={() => void runAction(a.id, "reject")}
+                              className="rounded border border-red-500/25 bg-red-500/10 px-2 py-1 text-xs text-red-200/90 disabled:opacity-40"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : null}
+
+        {/* ── Contracts tab ── */}
+        {tab === "contracts" ? (
+          <>
+            {deals.length === 0 ? (
+              <p className="text-sm text-zinc-500">No contracts yet.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-white/10">
+                <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                      <th className="p-3 font-medium">Created</th>
+                      <th className="p-3 font-medium">Project</th>
+                      <th className="p-3 font-medium">Provider</th>
+                      <th className="p-3 font-medium">Buyer</th>
+                      <th className="p-3 font-medium">SOL</th>
+                      <th className="p-3 font-medium">Status</th>
+                      <th className="p-3 font-medium">Agreement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deals.map((d) => (
+                      <tr
+                        key={d.id}
+                        className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20"
+                      >
+                        <td className="p-3 text-xs text-zinc-500">
+                          {new Date(d.createdAt).toLocaleString()}
+                        </td>
+                        <td className="p-3">
+                          <div className="font-medium text-zinc-200">
+                            {d.projectTitle}
+                          </div>
+                          <div className="mt-0.5 text-xs text-zinc-500">
+                            {d.serviceName} · {d.milestoneCount} milestone
+                            {d.milestoneCount === 1 ? "" : "s"}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-xs text-zinc-300">
+                            {d.providerDisplayName}
+                          </div>
+                          <div className="font-mono text-[11px] text-zinc-600">
+                            {d.providerWallet}
+                          </div>
+                        </td>
+                        <td className="p-3 font-mono text-xs text-zinc-500">
+                          {d.buyerWallet}
+                        </td>
+                        <td className="p-3 text-xs text-zinc-300">
+                          {d.totalSol.toFixed(2)}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`inline-block rounded-md px-2 py-0.5 text-xs ${dealStatusColor(d.status)}`}
+                          >
+                            {d.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-xs">
+                          {d.agreementSigned ? (
+                            <span className="text-emerald-400">Signed</span>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : null}
 
         <p className="text-center text-xs text-zinc-600">
           <Link href="/" className="underline underline-offset-4 hover:text-zinc-400">
