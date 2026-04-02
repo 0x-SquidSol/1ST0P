@@ -43,7 +43,7 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
   const [apps, setApps] = useState<AppRow[]>([]);
   const [deals, setDeals] = useState<DealRow[]>([]);
-  const [tab, setTab] = useState<"applications" | "contracts">("applications");
+  const [tab, setTab] = useState<"applications" | "pending" | "contracts" | "pending_payment" | "completed">("applications");
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
 
@@ -236,10 +236,10 @@ export default function AdminPage() {
 
   function dealStatusColor(s: string): string {
     if (s === "active") return "bg-emerald-500/15 text-emerald-200";
+    if (s === "pending_payment") return "bg-amber-500/20 text-amber-200";
     if (s === "completed") return "bg-emerald-500/25 text-emerald-100";
-    if (s === "agreement_pending") return "bg-amber-500/15 text-amber-200";
     if (s === "disputed") return "bg-red-500/15 text-red-200";
-    if (s === "declined") return "bg-red-500/10 text-red-300";
+    if (s === "locked") return "bg-amber-500/15 text-amber-200";
     return "bg-zinc-500/15 text-zinc-300";
   }
 
@@ -292,6 +292,17 @@ export default function AdminPage() {
           </button>
           <button
             type="button"
+            onClick={() => setTab("pending")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "pending"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Pending Contracts ({deals.filter((d) => ["open", "drafting", "locked"].includes(d.status)).length})
+          </button>
+          <button
+            type="button"
             onClick={() => setTab("contracts")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               tab === "contracts"
@@ -299,7 +310,29 @@ export default function AdminPage() {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            Contracts ({deals.length})
+            Contracts ({deals.filter((d) => d.status === "active").length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("pending_payment")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "pending_payment"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Pending Payment ({deals.filter((d) => d.status === "pending_payment").length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("completed")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "completed"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Completed ({deals.filter((d) => ["completed", "disputed"].includes(d.status)).length})
           </button>
         </div>
 
@@ -412,78 +445,178 @@ export default function AdminPage() {
           </>
         ) : null}
 
-        {/* ── Contracts tab ── */}
-        {tab === "contracts" ? (
-          <>
-            {deals.length === 0 ? (
-              <p className="text-sm text-zinc-500">No contracts yet.</p>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-white/10">
-                <table className="w-full min-w-[700px] border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
-                      <th className="p-3 font-medium">Created</th>
-                      <th className="p-3 font-medium">Contract</th>
-                      <th className="p-3 font-medium">Provider</th>
-                      <th className="p-3 font-medium">Buyer</th>
-                      <th className="p-3 font-medium">SOL</th>
-                      <th className="p-3 font-medium">Status</th>
-                      <th className="p-3 font-medium">Agreement</th>
+        {/* ── Pending Contracts tab (open / drafting / locked) ── */}
+        {tab === "pending" ? (() => {
+          const pending = deals.filter((d) => ["open", "drafting", "locked"].includes(d.status));
+          return pending.length === 0 ? (
+            <p className="text-sm text-zinc-500">No pending chats.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                    <th className="p-3 font-medium">Created</th>
+                    <th className="p-3 font-medium">Service</th>
+                    <th className="p-3 font-medium">Provider</th>
+                    <th className="p-3 font-medium">Buyer</th>
+                    <th className="p-3 font-medium">Status</th>
+                    <th className="p-3 font-medium">Last update</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pending.map((d) => (
+                    <tr key={d.id} className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20">
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <div className="font-medium text-zinc-200">{d.serviceName}</div>
+                        <div className="mt-0.5 text-xs text-zinc-500">{d.providerDisplayName}</div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-zinc-500">{d.providerWallet}</td>
+                      <td className="p-3 font-mono text-xs text-zinc-500">{d.buyerWallet}</td>
+                      <td className="p-3">
+                        <span className={`inline-block rounded-md px-2 py-0.5 text-xs ${dealStatusColor(d.status)}`}>
+                          {d.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.updatedAt).toLocaleString()}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {deals.map((d) => (
-                      <tr
-                        key={d.id}
-                        className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20"
-                      >
-                        <td className="p-3 text-xs text-zinc-500">
-                          {new Date(d.createdAt).toLocaleString()}
-                        </td>
-                        <td className="p-3">
-                          <div className="font-medium text-zinc-200">
-                            {d.serviceType}
-                          </div>
-                          <div className="mt-0.5 text-xs text-zinc-500">
-                            {d.serviceName}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="text-xs text-zinc-300">
-                            {d.providerDisplayName}
-                          </div>
-                          <div className="font-mono text-[11px] text-zinc-600">
-                            {d.providerWallet}
-                          </div>
-                        </td>
-                        <td className="p-3 font-mono text-xs text-zinc-500">
-                          {d.buyerWallet}
-                        </td>
-                        <td className="p-3 text-xs text-zinc-300">
-                          {d.totalSol.toFixed(2)}
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`inline-block rounded-md px-2 py-0.5 text-xs ${dealStatusColor(d.status)}`}
-                          >
-                            {d.status}
-                          </span>
-                        </td>
-                        <td className="p-3 text-xs">
-                          {d.agreementSigned ? (
-                            <span className="text-emerald-400">Signed</span>
-                          ) : (
-                            <span className="text-zinc-600">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        ) : null}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : null}
+
+        {/* ── Contracts tab (active only) ── */}
+        {tab === "contracts" ? (() => {
+          const active = deals.filter((d) => d.status === "active");
+          return active.length === 0 ? (
+            <p className="text-sm text-zinc-500">No active contracts yet.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                    <th className="p-3 font-medium">Created</th>
+                    <th className="p-3 font-medium">Contract</th>
+                    <th className="p-3 font-medium">Provider</th>
+                    <th className="p-3 font-medium">Buyer</th>
+                    <th className="p-3 font-medium">SOL</th>
+                    <th className="p-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {active.map((d) => (
+                    <tr key={d.id} className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20">
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <div className="font-medium text-zinc-200">{d.serviceType}</div>
+                        <div className="mt-0.5 text-xs text-zinc-500">{d.serviceName}</div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-xs text-zinc-300">{d.providerDisplayName}</div>
+                        <div className="font-mono text-[11px] text-zinc-600">{d.providerWallet}</div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-zinc-500">{d.buyerWallet}</td>
+                      <td className="p-3 text-xs text-zinc-300">{d.totalSol.toFixed(2)}</td>
+                      <td className="p-3">
+                        <span className={`inline-block rounded-md px-2 py-0.5 text-xs ${dealStatusColor(d.status)}`}>
+                          {d.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : null}
+
+        {/* ── Pending Payment tab ── */}
+        {tab === "pending_payment" ? (() => {
+          const pp = deals.filter((d) => d.status === "pending_payment");
+          return pp.length === 0 ? (
+            <p className="text-sm text-zinc-500">No contracts awaiting payment release.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                    <th className="p-3 font-medium">Created</th>
+                    <th className="p-3 font-medium">Contract</th>
+                    <th className="p-3 font-medium">Provider</th>
+                    <th className="p-3 font-medium">Buyer</th>
+                    <th className="p-3 font-medium">SOL</th>
+                    <th className="p-3 font-medium">Last update</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pp.map((d) => (
+                    <tr key={d.id} className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20">
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <div className="font-medium text-zinc-200">{d.serviceType}</div>
+                        <div className="mt-0.5 text-xs text-zinc-500">{d.serviceName}</div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-xs text-zinc-300">{d.providerDisplayName}</div>
+                        <div className="font-mono text-[11px] text-zinc-600">{d.providerWallet}</div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-zinc-500">{d.buyerWallet}</td>
+                      <td className="p-3 text-xs text-zinc-300">{d.totalSol.toFixed(2)}</td>
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.updatedAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : null}
+
+        {/* ── Completed tab (completed + disputed history) ── */}
+        {tab === "completed" ? (() => {
+          const done = deals.filter((d) => ["completed", "disputed"].includes(d.status));
+          return done.length === 0 ? (
+            <p className="text-sm text-zinc-500">No completed contracts yet.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
+                    <th className="p-3 font-medium">Created</th>
+                    <th className="p-3 font-medium">Contract</th>
+                    <th className="p-3 font-medium">Provider</th>
+                    <th className="p-3 font-medium">Buyer</th>
+                    <th className="p-3 font-medium">SOL</th>
+                    <th className="p-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {done.map((d) => (
+                    <tr key={d.id} className="border-b border-white/[0.06] align-top hover:bg-zinc-900/20">
+                      <td className="p-3 text-xs text-zinc-500">{new Date(d.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <div className="font-medium text-zinc-200">{d.serviceType}</div>
+                        <div className="mt-0.5 text-xs text-zinc-500">{d.serviceName}</div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-xs text-zinc-300">{d.providerDisplayName}</div>
+                        <div className="font-mono text-[11px] text-zinc-600">{d.providerWallet}</div>
+                      </td>
+                      <td className="p-3 font-mono text-xs text-zinc-500">{d.buyerWallet}</td>
+                      <td className="p-3 text-xs text-zinc-300">{d.totalSol.toFixed(2)}</td>
+                      <td className="p-3">
+                        <span className={`inline-block rounded-md px-2 py-0.5 text-xs ${dealStatusColor(d.status)}`}>
+                          {d.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : null}
 
         <p className="text-center text-xs text-zinc-600">
           <Link href="/" className="underline underline-offset-4 hover:text-zinc-400">

@@ -40,19 +40,21 @@ export type ApplicationThread = {
 
 /**
  * Deal status flow:
- *   open        → chat started, no agreement yet
- *   drafting    → someone opened the agreement editor
- *   locked      → agreement locked, waiting for both signatures
- *   active      → both signed, work in progress
- *   completed   → all milestones released
- *   disputed    → at least one milestone flagged
- *   cancelled   → either party walked away before lock
+ *   open            → chat started, no agreement yet
+ *   drafting        → someone opened the agreement editor
+ *   locked          → both parties locked, waiting for buyer payment
+ *   active          → paid, work in progress
+ *   pending_payment → work complete, awaiting payout to provider
+ *   completed       → provider paid, deal fully closed
+ *   disputed        → flagged for admin review
+ *   cancelled       → either party walked away before lock
  */
 export type DealStatus =
   | "open"
   | "drafting"
   | "locked"
   | "active"
+  | "pending_payment"
   | "completed"
   | "disputed"
   | "cancelled";

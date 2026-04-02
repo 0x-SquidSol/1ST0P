@@ -15,8 +15,9 @@ type DealApi = {
 const STATUS_LABELS: Record<string, string> = {
   open: "Open",
   drafting: "Drafting Contract",
-  locked: "Locked — Awaiting Signatures",
+  locked: "Locked — Awaiting Payment",
   active: "Active",
+  pending_payment: "Pending Payment",
   completed: "Completed",
   disputed: "Disputed",
   cancelled: "Cancelled",
@@ -27,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
   drafting: "bg-amber-500/15 text-amber-300",
   locked: "bg-amber-500/25 text-amber-200",
   active: "bg-emerald-500/15 text-emerald-300",
+  pending_payment: "bg-amber-500/20 text-amber-200",
   completed: "bg-emerald-500/25 text-emerald-200",
   disputed: "bg-red-500/15 text-red-300",
   cancelled: "bg-zinc-500/15 text-zinc-500",
