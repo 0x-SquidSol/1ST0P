@@ -117,6 +117,45 @@ export type StoredApplication = {
   approvedAt?: string;
 };
 
+/**
+ * /tmp file-backed persistence so all Vercel serverless functions
+ * share the same data within a warm execution environment.
+ * Only runs server-side (typeof window === "undefined").
+ */
+const isServer = typeof window === "undefined";
+const TMP_DIR = "/tmp/1st0p-dev-store";
+
+function tmpPath(name: string) { return `${TMP_DIR}/${name}`; }
+const DEALS_FILE = tmpPath("deals.json");
+const APPS_FILE = tmpPath("apps.json");
+const THREADS_FILE = tmpPath("threads.json");
+const PROFILES_FILE = tmpPath("profiles.json");
+
+function readJsonFile<T>(filePath: string): T | null {
+  if (!isServer) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("fs");
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonFile(filePath: string, data: unknown) {
+  if (!isServer) return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("fs");
+    if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(data), "utf8");
+  } catch {
+    // Silently fail — in-memory still works
+  }
+}
+
 const g = globalThis as unknown as {
   __1st0pApplications?: StoredApplication[];
   __1st0pThreads?: ApplicationThread[];
@@ -125,23 +164,40 @@ const g = globalThis as unknown as {
 };
 
 function applications(): StoredApplication[] {
+  // Always re-read from /tmp to pick up writes from other serverless functions
+  const fromDisk = readJsonFile<StoredApplication[]>(APPS_FILE);
+  if (fromDisk) { g.__1st0pApplications = fromDisk; }
   if (!g.__1st0pApplications) g.__1st0pApplications = [];
   return g.__1st0pApplications;
 }
 
 function threads(): ApplicationThread[] {
+  const fromDisk = readJsonFile<ApplicationThread[]>(THREADS_FILE);
+  if (fromDisk) { g.__1st0pThreads = fromDisk; }
   if (!g.__1st0pThreads) g.__1st0pThreads = [];
   return g.__1st0pThreads;
 }
 
 function approvedProfiles(): ProviderProfile[] {
+  const fromDisk = readJsonFile<ProviderProfile[]>(PROFILES_FILE);
+  if (fromDisk) { g.__1st0pApprovedProfiles = fromDisk; }
   if (!g.__1st0pApprovedProfiles) g.__1st0pApprovedProfiles = [];
   return g.__1st0pApprovedProfiles;
 }
 
 function deals(): DealThread[] {
+  const fromDisk = readJsonFile<DealThread[]>(DEALS_FILE);
+  if (fromDisk) { g.__1st0pDeals = fromDisk; }
   if (!g.__1st0pDeals) g.__1st0pDeals = [];
   return g.__1st0pDeals;
+}
+
+/** Flush all in-memory state to /tmp after every mutation. */
+function flush() {
+  writeJsonFile(DEALS_FILE, g.__1st0pDeals ?? []);
+  writeJsonFile(APPS_FILE, g.__1st0pApplications ?? []);
+  writeJsonFile(THREADS_FILE, g.__1st0pThreads ?? []);
+  writeJsonFile(PROFILES_FILE, g.__1st0pApprovedProfiles ?? []);
 }
 
 export function listApprovedApplicationProfiles(): ProviderProfile[] {
@@ -225,6 +281,7 @@ export function addApplicationWithThread(
     updatedAt: submittedAt,
   });
 
+  flush();
   return { applicationId, threadId };
 }
 
@@ -259,6 +316,7 @@ export function appendMessage(
   };
   t.messages.push(msg);
   t.updatedAt = msg.createdAt;
+  flush();
   return msg;
 }
 
@@ -270,6 +328,7 @@ export function setThreadStatus(
   if (!t) return null;
   t.status = status;
   t.updatedAt = new Date().toISOString();
+  flush();
   return t;
 }
 
@@ -303,6 +362,7 @@ export function approveStoredApplication(
   app.reviewStatus = "approved";
   app.publicSlug = slug;
   app.approvedAt = new Date().toISOString();
+  flush();
   return { slug };
 }
 
@@ -315,6 +375,7 @@ export function rejectStoredApplication(
   app.reviewStatus = "rejected";
   app.publicSlug = undefined;
   app.approvedAt = undefined;
+  flush();
   return { ok: true };
 }
 
@@ -327,6 +388,7 @@ export function markApplicationNeedsInfo(
     return { error: "approve or reject before changing to needs info" };
   }
   app.reviewStatus = "needs_info";
+  flush();
   return { ok: true };
 }
 
@@ -339,6 +401,7 @@ export function markApplicationPending(
     return { error: "cannot set pending on approved application" };
   }
   app.reviewStatus = "pending";
+  flush();
   return { ok: true };
 }
 
@@ -371,6 +434,7 @@ export function createDealThread(input: {
     updatedAt: now,
   };
   deals().push(thread);
+  flush();
   return thread;
 }
 
@@ -399,6 +463,7 @@ export function appendDealMessage(
   };
   d.messages.push(msg);
   d.updatedAt = msg.createdAt;
+  flush();
   return msg;
 }
 
@@ -410,6 +475,7 @@ export function setDealStatus(
   if (!d) return null;
   d.status = status;
   d.updatedAt = new Date().toISOString();
+  flush();
   return d;
 }
 
@@ -462,6 +528,7 @@ export function saveDraftAgreement(
     createdAt: now,
   });
 
+  flush();
   return d;
 }
 
@@ -516,6 +583,7 @@ export function lockAgreement(
     createdAt: now,
   });
 
+  flush();
   return d;
 }
 
@@ -547,6 +615,7 @@ export function unlockAgreement(
     createdAt: now,
   });
 
+  flush();
   return d;
 }
 
@@ -590,6 +659,7 @@ export function signAgreement(
     });
   }
 
+  flush();
   return d;
 }
 
