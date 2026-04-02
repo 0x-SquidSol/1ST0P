@@ -37,6 +37,52 @@ export type ApplicationThread = {
   updatedAt: string;
 };
 
+export type DealReviewStatus =
+  | "proposed"
+  | "changes_requested"
+  | "accepted"
+  | "declined";
+
+export type DealMessageAuthorRole = "system" | "buyer" | "provider" | "operator";
+
+export type DealMessage = {
+  id: string;
+  authorRole: DealMessageAuthorRole;
+  body: string;
+  createdAt: string;
+};
+
+export type DealMilestone = {
+  id: string;
+  title: string;
+  deliverable: string;
+  amountSol: number;
+  dueDate: string;
+};
+
+export type DealProposal = {
+  projectTitle: string;
+  scopeSummary: string;
+  startDate: string;
+  targetDate: string;
+  notes?: string;
+  milestones: DealMilestone[];
+};
+
+export type DealThread = {
+  id: string;
+  providerSlug: string;
+  providerDisplayName: string;
+  serviceName: string;
+  buyerWallet: string;
+  providerWallet: string;
+  status: DealReviewStatus;
+  proposal: DealProposal;
+  messages: DealMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoredApplication = {
   id: string;
   submittedAt: string;
@@ -50,6 +96,7 @@ const g = globalThis as unknown as {
   __1st0pApplications?: StoredApplication[];
   __1st0pThreads?: ApplicationThread[];
   __1st0pApprovedProfiles?: ProviderProfile[];
+  __1st0pDeals?: DealThread[];
 };
 
 function applications(): StoredApplication[] {
@@ -67,6 +114,11 @@ function approvedProfiles(): ProviderProfile[] {
   return g.__1st0pApprovedProfiles;
 }
 
+function deals(): DealThread[] {
+  if (!g.__1st0pDeals) g.__1st0pDeals = [];
+  return g.__1st0pDeals;
+}
+
 export function listApprovedApplicationProfiles(): ProviderProfile[] {
   return [...approvedProfiles()];
 }
@@ -75,6 +127,13 @@ export function getApprovedProfileBySlug(
   slug: string,
 ): ProviderProfile | undefined {
   return approvedProfiles().find((p) => p.slug === slug);
+}
+
+export function getProviderWalletForSlug(slug: string): string | null {
+  const p = getApprovedProfileBySlug(slug);
+  if (!p?.sourceApplicationId) return null;
+  const app = getApplicationById(p.sourceApplicationId);
+  return app?.payload.applicantWallet ?? null;
 }
 
 function slugInUse(slug: string, excludeApplicationId?: string): boolean {
@@ -256,4 +315,76 @@ export function markApplicationPending(
   }
   app.reviewStatus = "pending";
   return { ok: true };
+}
+
+export function createDealThread(input: {
+  providerSlug: string;
+  providerDisplayName: string;
+  serviceName: string;
+  buyerWallet: string;
+  providerWallet: string;
+  proposal: DealProposal;
+}): DealThread {
+  const now = new Date().toISOString();
+  const thread: DealThread = {
+    id: randomUUID(),
+    providerSlug: input.providerSlug,
+    providerDisplayName: input.providerDisplayName,
+    serviceName: input.serviceName,
+    buyerWallet: input.buyerWallet,
+    providerWallet: input.providerWallet,
+    status: "proposed",
+    proposal: input.proposal,
+    messages: [
+      {
+        id: randomUUID(),
+        authorRole: "system",
+        body: "Deal thread created. Provider can accept, request changes, or decline this proposal.",
+        createdAt: now,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+  deals().push(thread);
+  return thread;
+}
+
+export function listDealThreadsForWallet(wallet: string): DealThread[] {
+  return deals()
+    .filter((d) => d.buyerWallet === wallet || d.providerWallet === wallet)
+    .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+}
+
+export function getDealThreadById(id: string): DealThread | undefined {
+  return deals().find((d) => d.id === id);
+}
+
+export function appendDealMessage(
+  dealId: string,
+  role: Exclude<DealMessageAuthorRole, "system">,
+  body: string,
+): DealMessage | null {
+  const d = getDealThreadById(dealId);
+  if (!d) return null;
+  const msg: DealMessage = {
+    id: randomUUID(),
+    authorRole: role,
+    body: body.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  d.messages.push(msg);
+  d.updatedAt = msg.createdAt;
+  return msg;
+}
+
+export function setDealStatus(
+  dealId: string,
+  status: DealReviewStatus,
+): DealThread | null {
+  const d = getDealThreadById(dealId);
+  if (!d) return null;
+  d.status = status;
+  d.updatedAt = new Date().toISOString();
+  return d;
 }

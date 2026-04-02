@@ -132,6 +132,14 @@ export function ProviderServiceColumns({ providerSlug, offerings }: Props) {
                 >
                   All reviews below →
                 </a>
+                <Link
+                  href={`/marketplace/hire/${providerSlug}?service=${encodeURIComponent(
+                    o.serviceName,
+                  )}`}
+                  className="mt-3 inline-flex rounded-lg border border-white/15 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-white/25 hover:bg-zinc-900"
+                >
+                  Hire for this service
+                </Link>
               </div>
             </div>
           </li>
