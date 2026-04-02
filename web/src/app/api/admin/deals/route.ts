@@ -22,13 +22,12 @@ export async function GET() {
     buyerWallet: shortenWallet(d.buyerWallet, 6),
     providerWallet: shortenWallet(d.providerWallet, 6),
     status: d.status,
-    projectTitle: d.proposal.projectTitle,
-    milestoneCount: d.proposal.milestones.length,
-    totalSol: d.proposal.milestones.reduce((a, m) => a + m.amountSol, 0),
+    projectTitle: d.agreement?.projectTitle ?? "(no agreement yet)",
+    milestoneCount: d.agreement?.milestones?.length ?? 0,
+    totalSol: d.agreement?.milestones?.reduce((a, m) => a + m.amountSol, 0) ?? 0,
     agreementSigned:
-      d.agreement?.buyerSignedAt && d.agreement?.providerSignedAt
-        ? true
-        : false,
+      !!(d.agreement?.buyerSignedAt && d.agreement?.providerSignedAt),
+    locked: !!d.agreement?.lockedAt,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   }));

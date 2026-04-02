@@ -10,26 +10,12 @@ import {
   getApprovedProfileBySlug,
   getProviderWalletForSlug,
   listDealThreadsForWallet,
-  type DealMilestone,
 } from "@/lib/dev-marketplace-store";
 import { publicOfferings } from "@/lib/provider-profile";
-
-const milestoneSchema = z.object({
-  title: z.string().trim().min(2).max(120),
-  deliverable: z.string().trim().min(10).max(1000),
-  amountSol: z.number().positive().max(1_000_000),
-  dueDate: z.string().trim().min(8).max(40),
-});
 
 const createDealSchema = z.object({
   providerSlug: z.string().trim().min(2).max(120),
   serviceName: z.string().trim().min(2).max(120),
-  projectTitle: z.string().trim().min(4).max(140),
-  scopeSummary: z.string().trim().min(20).max(4000),
-  startDate: z.string().trim().min(8).max(40),
-  targetDate: z.string().trim().min(8).max(40),
-  notes: z.string().trim().max(2000).optional(),
-  milestones: z.array(milestoneSchema).min(1).max(12),
 });
 
 function toSummaryRow(d: {
@@ -55,17 +41,6 @@ function toSummaryRow(d: {
     messageCount: d.messages.length,
     participantRole: d.buyerWallet === wallet ? "buyer" : "provider",
   };
-}
-
-function normalizeMilestones(input: z.infer<typeof milestoneSchema>[]): DealMilestone[] {
-  return input.map((m, idx) => ({
-    id: `${idx + 1}`,
-    title: m.title,
-    deliverable: m.deliverable,
-    amountSol: m.amountSol,
-    dueDate: m.dueDate,
-    escrowStatus: "pending" as const,
-  }));
 }
 
 export async function GET() {
@@ -95,7 +70,7 @@ export async function POST(req: Request) {
   }
   const parsed = createDealSchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid deal payload" }, { status: 422 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 422 });
   }
 
   const profile = getApprovedProfileBySlug(parsed.data.providerSlug);
@@ -113,7 +88,7 @@ export async function POST(req: Request) {
   const providerWallet = getProviderWalletForSlug(parsed.data.providerSlug);
   if (!providerWallet) {
     return NextResponse.json(
-      { error: "Provider wallet is not linked yet for deal collaboration" },
+      { error: "Provider wallet is not linked yet" },
       { status: 422 },
     );
   }
@@ -130,14 +105,6 @@ export async function POST(req: Request) {
     serviceName: parsed.data.serviceName,
     buyerWallet: session.wallet,
     providerWallet,
-    proposal: {
-      projectTitle: parsed.data.projectTitle,
-      scopeSummary: parsed.data.scopeSummary,
-      startDate: parsed.data.startDate,
-      targetDate: parsed.data.targetDate,
-      notes: parsed.data.notes,
-      milestones: normalizeMilestones(parsed.data.milestones),
-    },
   });
 
   return NextResponse.json({ deal: thread });

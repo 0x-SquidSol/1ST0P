@@ -38,15 +38,24 @@ export type ApplicationThread = {
   updatedAt: string;
 };
 
-export type DealReviewStatus =
-  | "proposed"
-  | "changes_requested"
-  | "accepted"
-  | "declined"
-  | "agreement_pending"
+/**
+ * Deal status flow:
+ *   open        → chat started, no agreement yet
+ *   drafting    → someone opened the agreement editor
+ *   locked      → agreement locked, waiting for both signatures
+ *   active      → both signed, work in progress
+ *   completed   → all milestones released
+ *   disputed    → at least one milestone flagged
+ *   cancelled   → either party walked away before lock
+ */
+export type DealStatus =
+  | "open"
+  | "drafting"
+  | "locked"
   | "active"
   | "completed"
-  | "disputed";
+  | "disputed"
+  | "cancelled";
 
 export type DealMessageAuthorRole = "system" | "buyer" | "provider" | "operator";
 
@@ -72,25 +81,30 @@ export type DealMilestone = {
   escrowStatus: MilestoneEscrowStatus;
 };
 
-export type DealProposal = {
+export type DealAgreement = {
   projectTitle: string;
   scopeSummary: string;
   startDate: string;
   targetDate: string;
-  notes?: string;
+  notes: string;
   milestones: DealMilestone[];
-};
-
-export type DealAgreement = {
+  /** Who last edited the draft. */
+  lastEditedBy: "buyer" | "provider" | null;
+  lastEditedAt: string | null;
+  /** Lock: freeze edits, allow signing. */
+  lockedBy: "buyer" | "provider" | null;
+  lockedAt: string | null;
+  /** Signatures (only possible after lock). */
   buyerSignedAt: string | null;
   providerSignedAt: string | null;
+  /** Fee snapshot computed at lock time. */
   feeSnapshot: {
     serviceTotalSol: number;
     platformFeeSol: number;
     totalReleaseFeeSol: number;
     estimatedNetworkFeeSol: number;
     grandTotalSol: number;
-  };
+  } | null;
 };
 
 export type DealThread = {
@@ -100,8 +114,7 @@ export type DealThread = {
   serviceName: string;
   buyerWallet: string;
   providerWallet: string;
-  status: DealReviewStatus;
-  proposal: DealProposal;
+  status: DealStatus;
   agreement: DealAgreement | null;
   messages: DealMessage[];
   createdAt: string;
@@ -348,7 +361,6 @@ export function createDealThread(input: {
   serviceName: string;
   buyerWallet: string;
   providerWallet: string;
-  proposal: DealProposal;
 }): DealThread {
   const now = new Date().toISOString();
   const thread: DealThread = {
@@ -358,14 +370,13 @@ export function createDealThread(input: {
     serviceName: input.serviceName,
     buyerWallet: input.buyerWallet,
     providerWallet: input.providerWallet,
-    status: "proposed",
-    proposal: input.proposal,
+    status: "open",
     agreement: null,
     messages: [
       {
         id: randomUUID(),
         authorRole: "system",
-        body: "Deal thread created. Provider can accept, request changes, or decline this proposal.",
+        body: "Deal chat started. Discuss the scope and terms here, then open the agreement to draft milestones and lock it in.",
         createdAt: now,
       },
     ],
@@ -406,7 +417,7 @@ export function appendDealMessage(
 
 export function setDealStatus(
   dealId: string,
-  status: DealReviewStatus,
+  status: DealStatus,
 ): DealThread | null {
   const d = getDealThreadById(dealId);
   if (!d) return null;
@@ -416,66 +427,148 @@ export function setDealStatus(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Agreement + escrow helpers                                         */
+/*  Agreement: draft → lock → sign                                     */
 /* ------------------------------------------------------------------ */
 
-/**
- * Move an accepted deal into agreement_pending and snapshot fees.
- * Called when the provider accepts — both parties must then sign.
- */
-export function initAgreement(
+/** Save or update the agreement draft. Resets lock + signatures. */
+export function saveDraftAgreement(
   dealId: string,
+  role: "buyer" | "provider",
+  draft: {
+    projectTitle: string;
+    scopeSummary: string;
+    startDate: string;
+    targetDate: string;
+    notes: string;
+    milestones: { title: string; deliverable: string; amountSol: number; dueDate: string }[];
+  },
 ): DealThread | { error: string } {
   const d = getDealThreadById(dealId);
   if (!d) return { error: "not found" };
-  if (d.status !== "accepted") return { error: "deal must be accepted first" };
+  if (d.status !== "open" && d.status !== "drafting")
+    return { error: "cannot edit agreement in current state" };
 
-  const amounts = d.proposal.milestones.map((m) => m.amountSol);
-  const fb = computeFeeBreakdown(amounts);
+  const now = new Date().toISOString();
+  const milestones: DealMilestone[] = draft.milestones.map((m, idx) => ({
+    id: `${idx + 1}`,
+    title: m.title,
+    deliverable: m.deliverable,
+    amountSol: m.amountSol,
+    dueDate: m.dueDate,
+    escrowStatus: "pending" as const,
+  }));
 
   d.agreement = {
+    projectTitle: draft.projectTitle,
+    scopeSummary: draft.scopeSummary,
+    startDate: draft.startDate,
+    targetDate: draft.targetDate,
+    notes: draft.notes,
+    milestones,
+    lastEditedBy: role,
+    lastEditedAt: now,
+    lockedBy: null,
+    lockedAt: null,
     buyerSignedAt: null,
     providerSignedAt: null,
-    feeSnapshot: {
-      serviceTotalSol: fb.serviceTotalSol,
-      platformFeeSol: fb.platformFeeSol,
-      totalReleaseFeeSol: fb.totalReleaseFeeSol,
-      estimatedNetworkFeeSol: fb.estimatedNetworkFeeSol,
-      grandTotalSol: fb.grandTotalSol,
-    },
+    feeSnapshot: null,
   };
-  d.status = "agreement_pending";
-  d.updatedAt = new Date().toISOString();
+  d.status = "drafting";
+  d.updatedAt = now;
 
-  // Set all milestones to pending escrow
-  for (const m of d.proposal.milestones) {
-    m.escrowStatus = "pending";
-  }
-
-  appendDealMessage(dealId, "system" as never, "");
-  // Replace the empty message with a proper system message
-  const sysMsg = d.messages[d.messages.length - 1];
-  if (sysMsg) {
-    sysMsg.authorRole = "system";
-    sysMsg.body =
-      "Provider accepted the proposal. Both parties must now review and sign the agreement before work begins.";
-  }
+  const who = role === "buyer" ? "Buyer" : "Provider";
+  d.messages.push({
+    id: randomUUID(),
+    authorRole: "system",
+    body: `${who} updated the agreement draft.`,
+    createdAt: now,
+  });
 
   return d;
 }
 
 /**
- * Record a party's signature on the agreement.
- * When both have signed → status becomes "active".
+ * Lock the agreement — freeze all edits, compute fees.
+ * Only the party who did NOT last edit can lock (prevents last-minute self-lock).
+ * Or the same party can lock if they are the only editor so far.
  */
+export function lockAgreement(
+  dealId: string,
+  role: "buyer" | "provider",
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "drafting") return { error: "nothing to lock" };
+  if (!d.agreement) return { error: "no draft agreement" };
+  if (d.agreement.milestones.length === 0) return { error: "add at least one milestone" };
+  if (d.agreement.lockedAt) return { error: "already locked" };
+
+  const now = new Date().toISOString();
+  const amounts = d.agreement.milestones.map((m) => m.amountSol);
+  const fb = computeFeeBreakdown(amounts);
+
+  d.agreement.lockedBy = role;
+  d.agreement.lockedAt = now;
+  d.agreement.feeSnapshot = {
+    serviceTotalSol: fb.serviceTotalSol,
+    platformFeeSol: fb.platformFeeSol,
+    totalReleaseFeeSol: fb.totalReleaseFeeSol,
+    estimatedNetworkFeeSol: fb.estimatedNetworkFeeSol,
+    grandTotalSol: fb.grandTotalSol,
+  };
+  d.status = "locked";
+  d.updatedAt = now;
+
+  const who = role === "buyer" ? "Buyer" : "Provider";
+  d.messages.push({
+    id: randomUUID(),
+    authorRole: "system",
+    body: `${who} locked the agreement. Both parties must now sign to activate.`,
+    createdAt: now,
+  });
+
+  return d;
+}
+
+/** Unlock agreement back to drafting (resets signatures). */
+export function unlockAgreement(
+  dealId: string,
+  role: "buyer" | "provider",
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "locked") return { error: "not locked" };
+  if (!d.agreement) return { error: "no agreement" };
+
+  const now = new Date().toISOString();
+  d.agreement.lockedBy = null;
+  d.agreement.lockedAt = null;
+  d.agreement.buyerSignedAt = null;
+  d.agreement.providerSignedAt = null;
+  d.agreement.feeSnapshot = null;
+  d.status = "drafting";
+  d.updatedAt = now;
+
+  const who = role === "buyer" ? "Buyer" : "Provider";
+  d.messages.push({
+    id: randomUUID(),
+    authorRole: "system",
+    body: `${who} unlocked the agreement for further edits.`,
+    createdAt: now,
+  });
+
+  return d;
+}
+
+/** Sign a locked agreement. Both must sign → status becomes active. */
 export function signAgreement(
   dealId: string,
   role: "buyer" | "provider",
 ): DealThread | { error: string } {
   const d = getDealThreadById(dealId);
   if (!d) return { error: "not found" };
-  if (d.status !== "agreement_pending") return { error: "no pending agreement" };
-  if (!d.agreement) return { error: "agreement not initialized" };
+  if (d.status !== "locked") return { error: "agreement must be locked first" };
+  if (!d.agreement || !d.agreement.lockedAt) return { error: "not locked" };
 
   const now = new Date().toISOString();
 
@@ -486,36 +579,30 @@ export function signAgreement(
     if (d.agreement.providerSignedAt) return { error: "provider already signed" };
     d.agreement.providerSignedAt = now;
   }
-
   d.updatedAt = now;
 
-  // Both signed → activate + prompt buyer for payment
   if (d.agreement.buyerSignedAt && d.agreement.providerSignedAt) {
     d.status = "active";
-    const sysMsg: DealMessage = {
+    d.messages.push({
       id: randomUUID(),
       authorRole: "system",
-      body: "Both parties signed the agreement. Buyer: please fund the escrow to begin work.",
+      body: "Both parties signed. Agreement is active — buyer: fund escrow to begin work.",
       createdAt: now,
-    };
-    d.messages.push(sysMsg);
+    });
   } else {
     const who = role === "buyer" ? "Buyer" : "Provider";
-    const sysMsg: DealMessage = {
+    d.messages.push({
       id: randomUUID(),
       authorRole: "system",
       body: `${who} signed the agreement. Waiting for the other party.`,
       createdAt: now,
-    };
-    d.messages.push(sysMsg);
+    });
   }
 
   return d;
 }
 
-/**
- * Update a milestone's escrow status (e.g. pending → in_progress → released).
- */
+/** Update a milestone's escrow status. */
 export function updateMilestoneEscrow(
   dealId: string,
   milestoneId: string,
@@ -525,32 +612,31 @@ export function updateMilestoneEscrow(
   if (!d) return { error: "not found" };
   if (d.status !== "active" && d.status !== "disputed")
     return { error: "deal must be active" };
+  if (!d.agreement) return { error: "no agreement" };
 
-  const m = d.proposal.milestones.find((ms) => ms.id === milestoneId);
+  const m = d.agreement.milestones.find((ms) => ms.id === milestoneId);
   if (!m) return { error: "milestone not found" };
 
   m.escrowStatus = escrowStatus;
   d.updatedAt = new Date().toISOString();
 
-  // If all milestones released → mark deal completed
-  const allReleased = d.proposal.milestones.every(
+  const allReleased = d.agreement.milestones.every(
     (ms) => ms.escrowStatus === "released",
   );
   if (allReleased) {
     d.status = "completed";
-    const sysMsg: DealMessage = {
+    d.messages.push({
       id: randomUUID(),
       authorRole: "system",
-      body: "All milestones released. This engagement is now complete.",
+      body: "All milestones released. Engagement complete.",
       createdAt: d.updatedAt,
-    };
-    d.messages.push(sysMsg);
+    });
   }
 
   return d;
 }
 
-/** List all deals (for admin dashboard). */
+/** List all deals (admin dashboard). */
 export function listAllDeals(): DealThread[] {
   return [...deals()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 }

@@ -102,7 +102,7 @@ export default function MarketplaceDealsPage() {
         <PageHeader
           label="Marketplace"
           title="Deal chats"
-          description="Buyer-provider conversations for milestone proposals tied to a specific service."
+          description="Buyer-provider deal chats. Discuss terms, draft agreements, and track engagements."
         />
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Link
