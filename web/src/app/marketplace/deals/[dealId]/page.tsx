@@ -152,19 +152,19 @@ export default function DealThreadPage() {
                     <p className="mt-0.5 text-xs text-zinc-500">
                       {deal.status === "open" && "Discuss terms in chat, then open the contract to draft details."}
                       {deal.status === "drafting" && "Either party can edit. Lock when you're both happy with the terms."}
-                      {deal.status === "locked" && "No more edits. Both parties must sign, or unlock to make changes."}
+                      {deal.status === "locked" && "Both locked. Buyer can now pay to activate."}
                       {deal.status === "active" && "Payment held in escrow until both confirm completion."}
                     </p>
 
-                    {deal.agreement && (deal.status === "locked" || deal.status === "active") && (
+                    {deal.agreement && (deal.status === "drafting" || deal.status === "locked" || deal.status === "active") && (
                       <div className="mt-2 flex gap-4 text-xs">
                         <span className="flex items-center gap-1">
-                          <span className={`inline-block h-2 w-2 rounded-full ${deal.agreement.buyerSignedAt ? "bg-emerald-500" : "bg-zinc-700"}`} />
-                          Buyer {deal.agreement.buyerSignedAt ? "Signed" : "Pending"}
+                          <span className={`inline-block h-2 w-2 rounded-full ${deal.agreement.buyerLockedAt ? "bg-amber-500" : "bg-zinc-700"}`} />
+                          Buyer {deal.agreement.buyerLockedAt ? "Locked" : "Pending"}
                         </span>
                         <span className="flex items-center gap-1">
-                          <span className={`inline-block h-2 w-2 rounded-full ${deal.agreement.providerSignedAt ? "bg-emerald-500" : "bg-zinc-700"}`} />
-                          Provider {deal.agreement.providerSignedAt ? "Signed" : "Pending"}
+                          <span className={`inline-block h-2 w-2 rounded-full ${deal.agreement.providerLockedAt ? "bg-amber-500" : "bg-zinc-700"}`} />
+                          Provider {deal.agreement.providerLockedAt ? "Locked" : "Pending"}
                         </span>
                       </div>
                     )}

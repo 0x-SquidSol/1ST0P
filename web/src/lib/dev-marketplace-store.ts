@@ -78,10 +78,10 @@ export type DealAgreement = {
   /** Who last edited the draft. */
   lastEditedBy: "buyer" | "provider" | null;
   lastEditedAt: string | null;
-  /** Lock: freeze edits, allow signing. */
-  lockedBy: "buyer" | "provider" | null;
-  lockedAt: string | null;
-  /** Signatures (only possible after lock). */
+  /** Both parties must lock before payment is possible. */
+  buyerLockedAt: string | null;
+  providerLockedAt: string | null;
+  /** Signatures (applied on payment). */
   buyerSignedAt: string | null;
   providerSignedAt: string | null;
   /** Fee snapshot computed at lock time. */
@@ -432,6 +432,9 @@ export function saveDraftAgreement(
   if (!d) return { error: "not found" };
   if (d.status !== "open" && d.status !== "drafting")
     return { error: "cannot edit agreement in current state" };
+  // Block edits if either party has locked — must unlock first
+  if (d.agreement?.buyerLockedAt || d.agreement?.providerLockedAt)
+    return { error: "contract is locked — unlock before editing" };
 
   const now = new Date().toISOString();
 
@@ -442,8 +445,8 @@ export function saveDraftAgreement(
     totalCostSol: draft.totalCostSol,
     lastEditedBy: role,
     lastEditedAt: now,
-    lockedBy: null,
-    lockedAt: null,
+    buyerLockedAt: null,
+    providerLockedAt: null,
     buyerSignedAt: null,
     providerSignedAt: null,
     feeSnapshot: null,
@@ -462,57 +465,74 @@ export function saveDraftAgreement(
   return d;
 }
 
-/** Lock the agreement — freeze all edits, compute fees. */
+/**
+ * Lock the contract for one party. Both must lock before payment.
+ * First lock computes fees. Second lock moves status to "locked".
+ */
 export function lockAgreement(
   dealId: string,
   role: "buyer" | "provider",
 ): DealThread | { error: string } {
   const d = getDealThreadById(dealId);
   if (!d) return { error: "not found" };
-  if (d.status !== "drafting") return { error: "nothing to lock" };
+  if (d.status !== "drafting" && d.status !== "locked")
+    return { error: "nothing to lock" };
   if (!d.agreement) return { error: "no draft agreement" };
   if (d.agreement.totalCostSol <= 0) return { error: "total cost must be greater than 0" };
-  if (d.agreement.lockedAt) return { error: "already locked" };
 
   const now = new Date().toISOString();
-  const fb = computeFeeBreakdown([d.agreement.totalCostSol]);
 
-  d.agreement.lockedBy = role;
-  d.agreement.lockedAt = now;
-  d.agreement.feeSnapshot = {
-    serviceTotalSol: fb.serviceTotalSol,
-    platformFeeSol: fb.platformFeeSol,
-    totalReleaseFeeSol: fb.totalReleaseFeeSol,
-    estimatedNetworkFeeSol: fb.estimatedNetworkFeeSol,
-    grandTotalSol: fb.grandTotalSol,
-  };
-  d.status = "locked";
+  if (role === "buyer") {
+    if (d.agreement.buyerLockedAt) return { error: "buyer already locked" };
+    d.agreement.buyerLockedAt = now;
+  } else {
+    if (d.agreement.providerLockedAt) return { error: "provider already locked" };
+    d.agreement.providerLockedAt = now;
+  }
+
+  // Compute fees on first lock
+  if (!d.agreement.feeSnapshot) {
+    const fb = computeFeeBreakdown([d.agreement.totalCostSol]);
+    d.agreement.feeSnapshot = {
+      serviceTotalSol: fb.serviceTotalSol,
+      platformFeeSol: fb.platformFeeSol,
+      totalReleaseFeeSol: fb.totalReleaseFeeSol,
+      estimatedNetworkFeeSol: fb.estimatedNetworkFeeSol,
+      grandTotalSol: fb.grandTotalSol,
+    };
+  }
+
+  const bothLocked = !!(d.agreement.buyerLockedAt && d.agreement.providerLockedAt);
+  d.status = bothLocked ? "locked" : "drafting";
   d.updatedAt = now;
 
   const who = role === "buyer" ? "Buyer" : "Provider";
   d.messages.push({
     id: randomUUID(),
     authorRole: "system",
-    body: `${who} locked the contract. Both parties must now sign to activate.`,
+    body: bothLocked
+      ? `${who} locked the contract. Both parties have locked — buyer can now pay.`
+      : `${who} locked the contract. Waiting for the other party to lock.`,
     createdAt: now,
   });
 
   return d;
 }
 
-/** Unlock agreement back to drafting (resets signatures). */
+/** Unlock agreement back to drafting (resets all locks and signatures). */
 export function unlockAgreement(
   dealId: string,
   role: "buyer" | "provider",
 ): DealThread | { error: string } {
   const d = getDealThreadById(dealId);
   if (!d) return { error: "not found" };
-  if (d.status !== "locked") return { error: "not locked" };
+  if (d.status !== "locked" && d.status !== "drafting")
+    return { error: "not locked" };
   if (!d.agreement) return { error: "no agreement" };
 
   const now = new Date().toISOString();
-  d.agreement.lockedBy = null;
-  d.agreement.lockedAt = null;
+  d.agreement.buyerLockedAt = null;
+  d.agreement.providerLockedAt = null;
   d.agreement.buyerSignedAt = null;
   d.agreement.providerSignedAt = null;
   d.agreement.feeSnapshot = null;
@@ -538,7 +558,8 @@ export function signAgreement(
   const d = getDealThreadById(dealId);
   if (!d) return { error: "not found" };
   if (d.status !== "locked") return { error: "agreement must be locked first" };
-  if (!d.agreement || !d.agreement.lockedAt) return { error: "not locked" };
+  if (!d.agreement || !d.agreement.buyerLockedAt || !d.agreement.providerLockedAt)
+    return { error: "not locked" };
 
   const now = new Date().toISOString();
 

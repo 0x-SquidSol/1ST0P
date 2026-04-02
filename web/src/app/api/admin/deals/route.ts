@@ -26,7 +26,7 @@ export async function GET() {
     totalSol: d.agreement?.totalCostSol ?? 0,
     agreementSigned:
       !!(d.agreement?.buyerSignedAt && d.agreement?.providerSignedAt),
-    locked: !!d.agreement?.lockedAt,
+    locked: !!(d.agreement?.buyerLockedAt && d.agreement?.providerLockedAt),
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   }));

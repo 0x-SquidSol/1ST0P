@@ -28,8 +28,16 @@ export function AgreementModal({
   onClose,
   onUpdated,
 }: Props) {
-  const isEditable = dealStatus === "open" || dealStatus === "drafting";
-  const isLocked = dealStatus === "locked";
+  const myLocked =
+    participantRole === "buyer"
+      ? !!agreement?.buyerLockedAt
+      : !!agreement?.providerLockedAt;
+  const anyLocked = !!(agreement?.buyerLockedAt || agreement?.providerLockedAt);
+  const isFullyLocked = dealStatus === "locked";
+  // Editable only if no locks exist at all
+  const isEditable = (dealStatus === "open" || dealStatus === "drafting") && !anyLocked;
+  // Read-only: at least one lock exists but not both yet
+  const isReadOnly = anyLocked && !isFullyLocked && dealStatus !== "active";
   const isActive = dealStatus === "active";
 
   // Form state
@@ -46,15 +54,6 @@ export function AgreementModal({
   const costNum = Number(totalCostSol);
   const validCost = Number.isFinite(costNum) && costNum > 0;
   const previewFees = validCost ? computeFeeBreakdown([costNum]) : null;
-
-  const alreadySigned =
-    participantRole === "buyer"
-      ? !!agreement?.buyerSignedAt
-      : !!agreement?.providerSignedAt;
-  const otherSigned =
-    participantRole === "buyer"
-      ? !!agreement?.providerSignedAt
-      : !!agreement?.buyerSignedAt;
 
   async function apiCall(body: object) {
     setBusy(true);
@@ -93,31 +92,21 @@ export function AgreementModal({
   }
 
   async function lockContract() {
-    // Save first, then lock
-    const draft = buildDraft();
-    const saveRes = await fetch(`/api/marketplace/deals/${dealId}/agree`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save_draft", draft }),
-    });
-    if (!saveRes.ok) {
-      const j = (await saveRes.json().catch(() => ({}))) as { error?: string };
-      setErr(j.error ?? "Could not save draft.");
-      return;
-    }
-    await apiCall({ action: "lock" });
+    // Save + lock in a single API call (same serverless invocation)
+    await apiCall({ action: "save_and_lock", draft: buildDraft() });
   }
 
   async function unlock() {
     await apiCall({ action: "unlock" });
   }
 
-  async function sign() {
-    await apiCall({ action: "sign" });
+  async function pay() {
+    // In the future this triggers a real Solana transaction.
+    // For now it marks both parties as signed and activates the deal.
+    await apiCall({ action: "pay" });
   }
 
-  const fees = (isLocked || isActive) ? agreement?.feeSnapshot : null;
+  const fees = (isFullyLocked || isReadOnly || isActive) ? agreement?.feeSnapshot : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -126,13 +115,18 @@ export function AgreementModal({
         <div className="mb-4 flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-zinc-100">
-              {isEditable ? "Draft Contract" : isLocked ? "Review & Sign Contract" : "Contract"}
+              {isEditable ? "Draft Contract"
+                : isFullyLocked ? "Pay & Activate"
+                : isReadOnly ? "Waiting for Other Party"
+                : "Contract"}
             </h2>
             <p className="mt-0.5 text-xs text-zinc-500">
               {isEditable
-                ? "Fill in the details. Either party can edit. Lock when ready."
-                : isLocked
-                  ? "Contract is locked. Review and sign, or unlock to edit."
+                ? "Fill in the details. Either party can edit. Lock when you're happy."
+                : isReadOnly
+                  ? "You locked the contract. Waiting for the other party to lock."
+                : isFullyLocked
+                  ? "Both parties locked. Buyer can now pay to activate."
                   : "Contract is active."}
             </p>
           </div>
@@ -222,8 +216,8 @@ export function AgreementModal({
           </div>
         ) : null}
 
-        {/* ── Locked / Active view (read-only) ── */}
-        {(isLocked || isActive) && agreement ? (
+        {/* ── Read-only view (one or both locked, or active) ── */}
+        {(isReadOnly || isFullyLocked || isActive) && agreement ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-white/[0.08] bg-zinc-900/50 p-3">
               <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">Service Type</p>
@@ -262,37 +256,37 @@ export function AgreementModal({
               <p>• Platform + release fees non-refundable once active.</p>
             </div>
 
-            {/* Signatures */}
+            {/* Lock status */}
             <div className="rounded-xl border border-white/[0.08] bg-zinc-900/50 p-3">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">Signatures</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">Lock Status</p>
               <div className="flex gap-4 text-sm">
-                <SigBadge label="Buyer" signed={!!agreement.buyerSignedAt} isYou={participantRole === "buyer"} />
-                <SigBadge label="Provider" signed={!!agreement.providerSignedAt} isYou={participantRole === "provider"} />
+                <LockBadge label="Buyer" locked={!!agreement.buyerLockedAt} isYou={participantRole === "buyer"} />
+                <LockBadge label="Provider" locked={!!agreement.providerLockedAt} isYou={participantRole === "provider"} />
               </div>
             </div>
 
-            {isLocked && agreement.lockedBy && (
-              <p className="text-xs text-amber-400/80">
-                Locked by {agreement.lockedBy === participantRole ? "you" : agreement.lockedBy}.
-                {!alreadySigned ? " Review carefully before signing." : ""}
-              </p>
-            )}
-
-            {/* Sign / unlock actions */}
-            {isLocked && (
+            {/* Actions: waiting for other to lock */}
+            {isReadOnly && (
               <div className="space-y-3 pt-1">
-                {!alreadySigned && (
+                {myLocked ? (
                   <>
-                    <label className="flex items-start gap-2 text-xs text-zinc-400">
-                      <input type="checkbox" checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        className="mt-0.5 rounded border-zinc-700 bg-zinc-900" />
-                      <span>I have reviewed the scope, timeline, cost, fees, and escrow policy. I agree to these terms.</span>
-                    </label>
+                    <p className="text-sm text-amber-300/80">
+                      You locked the contract. Waiting for the other party to review and lock.
+                    </p>
+                    <button onClick={() => void unlock()} disabled={busy}
+                      className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-900 disabled:opacity-40">
+                      Unlock for edits
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-amber-300/80">
+                      The other party locked the contract. Review the terms, then lock to confirm.
+                    </p>
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => void sign()} disabled={!acceptedTerms || busy}
-                        className="rounded-lg border border-white/20 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:opacity-40">
-                        {busy ? "Signing…" : `Sign as ${participantRole === "buyer" ? "Buyer" : "Provider"}`}
+                      <button onClick={() => void apiCall({ action: "lock" })} disabled={busy}
+                        className="rounded-lg border border-amber-500/30 bg-amber-500/15 px-4 py-2 text-sm font-medium text-amber-100 disabled:opacity-40">
+                        {busy ? "Locking…" : "Lock contract"}
                       </button>
                       <button onClick={() => void unlock()} disabled={busy}
                         className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-900 disabled:opacity-40">
@@ -301,11 +295,41 @@ export function AgreementModal({
                     </div>
                   </>
                 )}
-                {alreadySigned && !otherSigned && (
-                  <p className="text-sm text-zinc-500">You signed. Waiting for the other party.</p>
-                )}
-                {alreadySigned && otherSigned && (
-                  <p className="text-sm font-medium text-emerald-400">Both parties signed. Contract is active.</p>
+              </div>
+            )}
+
+            {/* Actions: both locked → buyer pays */}
+            {isFullyLocked && (
+              <div className="space-y-3 pt-1">
+                {participantRole === "buyer" ? (
+                  <>
+                    <label className="flex items-start gap-2 text-xs text-zinc-400">
+                      <input type="checkbox" checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="mt-0.5 rounded border-zinc-700 bg-zinc-900" />
+                      <span>I have reviewed the scope, timeline, cost, fees, and escrow policy. I agree to pay.</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => void pay()} disabled={!acceptedTerms || busy}
+                        className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 disabled:opacity-40 hover:bg-emerald-500">
+                        {busy ? "Processing…" : `Pay ${fees ? fees.grandTotalSol.toFixed(4) : ""} SOL`}
+                      </button>
+                      <button onClick={() => void unlock()} disabled={busy}
+                        className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-900 disabled:opacity-40">
+                        Unlock for edits
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-zinc-400">
+                      Both parties locked. Waiting for the buyer to pay.
+                    </p>
+                    <button onClick={() => void unlock()} disabled={busy}
+                      className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-900 disabled:opacity-40">
+                      Unlock for edits
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -352,12 +376,12 @@ function Row({ label, value, bold, muted }: { label: string; value: string; bold
   );
 }
 
-function SigBadge({ label, signed, isYou }: { label: string; signed: boolean; isYou: boolean }) {
+function LockBadge({ label, locked, isYou }: { label: string; locked: boolean; isYou: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`h-2.5 w-2.5 rounded-full ${signed ? "bg-emerald-500" : "bg-zinc-700"}`} />
+      <div className={`h-2.5 w-2.5 rounded-full ${locked ? "bg-amber-500" : "bg-zinc-700"}`} />
       <span className="text-zinc-300">{label}{isYou ? " (you)" : ""}</span>
-      <span className="text-xs text-zinc-600">{signed ? "Signed" : "Pending"}</span>
+      <span className="text-xs text-zinc-600">{locked ? "Locked" : "Pending"}</span>
     </div>
   );
 }

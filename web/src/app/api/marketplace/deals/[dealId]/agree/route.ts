@@ -80,6 +80,40 @@ export async function POST(
     return NextResponse.json({ deal: result });
   }
 
+  // Combined save + lock in one serverless invocation (avoids stale instance)
+  if (body.action === "save_and_lock") {
+    const parsed = draftSchema.safeParse(body.draft);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid draft" }, { status: 422 });
+    }
+    const saveResult = saveDraftAgreement(dealId, role, parsed.data);
+    if ("error" in saveResult) {
+      return NextResponse.json({ error: saveResult.error }, { status: 422 });
+    }
+    const lockResult = lockAgreement(dealId, role);
+    if ("error" in lockResult) {
+      return NextResponse.json({ error: lockResult.error }, { status: 422 });
+    }
+    return NextResponse.json({ deal: lockResult });
+  }
+
+  // Buyer pays → both signatures applied + deal becomes active
+  if (body.action === "pay") {
+    if (!isBuyer) {
+      return NextResponse.json({ error: "Only the buyer can pay" }, { status: 403 });
+    }
+    // Auto-sign both parties on payment (payment = agreement to terms)
+    const s1 = signAgreement(dealId, "buyer");
+    if ("error" in s1) {
+      return NextResponse.json({ error: s1.error }, { status: 422 });
+    }
+    const s2 = signAgreement(dealId, "provider");
+    if ("error" in s2) {
+      return NextResponse.json({ error: s2.error }, { status: 422 });
+    }
+    return NextResponse.json({ deal: s2 });
+  }
+
   if (body.action === "unlock") {
     const result = unlockAgreement(dealId, role);
     if ("error" in result) {
