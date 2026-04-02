@@ -13,30 +13,21 @@ import {
   signAgreement,
 } from "@/lib/dev-marketplace-store";
 
-const milestoneSchema = z.object({
-  title: z.string().trim().min(2).max(120),
-  deliverable: z.string().trim().min(2).max(1000),
-  amountSol: z.number().positive().max(1_000_000),
-  dueDate: z.string().trim().min(1).max(40),
-});
-
 const draftSchema = z.object({
-  projectTitle: z.string().trim().min(2).max(140),
-  scopeSummary: z.string().trim().min(2).max(4000),
-  startDate: z.string().trim().min(1).max(40),
-  targetDate: z.string().trim().min(1).max(40),
-  notes: z.string().trim().max(2000).default(""),
-  milestones: z.array(milestoneSchema).min(1).max(12),
+  serviceType: z.string().trim().min(2).max(140),
+  scopeDetails: z.string().trim().min(2).max(20000),
+  timeline: z.string().trim().min(2).max(2000),
+  totalCostSol: z.number().positive().max(1_000_000),
 });
 
 /**
  * POST /api/marketplace/deals/[dealId]/agree
  *
  * Actions:
- *   { action: "save_draft", draft: {...} }  — save/update agreement draft
- *   { action: "lock" }                      — lock the agreement (no more edits)
+ *   { action: "save_draft", draft: {...} }  — save/update contract draft
+ *   { action: "lock" }                      — lock the contract (no more edits)
  *   { action: "unlock" }                    — unlock back to drafting
- *   { action: "sign" }                      — sign the locked agreement
+ *   { action: "sign" }                      — sign the locked contract
  */
 export async function POST(
   req: Request,

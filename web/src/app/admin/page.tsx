@@ -25,10 +25,10 @@ type DealRow = {
   buyerWallet: string;
   providerWallet: string;
   status: string;
-  projectTitle: string;
-  milestoneCount: number;
+  serviceType: string;
   totalSol: number;
   agreementSigned: boolean;
+  locked: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -423,7 +423,7 @@ export default function AdminPage() {
                   <thead>
                     <tr className="border-b border-white/10 bg-zinc-900/50 text-xs uppercase tracking-wider text-zinc-500">
                       <th className="p-3 font-medium">Created</th>
-                      <th className="p-3 font-medium">Project</th>
+                      <th className="p-3 font-medium">Contract</th>
                       <th className="p-3 font-medium">Provider</th>
                       <th className="p-3 font-medium">Buyer</th>
                       <th className="p-3 font-medium">SOL</th>
@@ -442,11 +442,10 @@ export default function AdminPage() {
                         </td>
                         <td className="p-3">
                           <div className="font-medium text-zinc-200">
-                            {d.projectTitle}
+                            {d.serviceType}
                           </div>
                           <div className="mt-0.5 text-xs text-zinc-500">
-                            {d.serviceName} · {d.milestoneCount} milestone
-                            {d.milestoneCount === 1 ? "" : "s"}
+                            {d.serviceName}
                           </div>
                         </td>
                         <td className="p-3">

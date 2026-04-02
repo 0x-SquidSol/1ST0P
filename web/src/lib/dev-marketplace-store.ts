@@ -66,28 +66,15 @@ export type DealMessage = {
   createdAt: string;
 };
 
-export type MilestoneEscrowStatus =
-  | "pending"
-  | "in_progress"
-  | "released"
-  | "disputed";
-
-export type DealMilestone = {
-  id: string;
-  title: string;
-  deliverable: string;
-  amountSol: number;
-  dueDate: string;
-  escrowStatus: MilestoneEscrowStatus;
-};
-
 export type DealAgreement = {
-  projectTitle: string;
-  scopeSummary: string;
-  startDate: string;
-  targetDate: string;
-  notes: string;
-  milestones: DealMilestone[];
+  /** Locked to the service the buyer clicked Hire on. */
+  serviceType: string;
+  /** Full scope / terms of the contract. */
+  scopeDetails: string;
+  /** Free-text timeline description. */
+  timeline: string;
+  /** Total cost in SOL — held in escrow, paid on completion. */
+  totalCostSol: number;
   /** Who last edited the draft. */
   lastEditedBy: "buyer" | "provider" | null;
   lastEditedAt: string | null;
@@ -435,12 +422,10 @@ export function saveDraftAgreement(
   dealId: string,
   role: "buyer" | "provider",
   draft: {
-    projectTitle: string;
-    scopeSummary: string;
-    startDate: string;
-    targetDate: string;
-    notes: string;
-    milestones: { title: string; deliverable: string; amountSol: number; dueDate: string }[];
+    serviceType: string;
+    scopeDetails: string;
+    timeline: string;
+    totalCostSol: number;
   },
 ): DealThread | { error: string } {
   const d = getDealThreadById(dealId);
@@ -449,22 +434,12 @@ export function saveDraftAgreement(
     return { error: "cannot edit agreement in current state" };
 
   const now = new Date().toISOString();
-  const milestones: DealMilestone[] = draft.milestones.map((m, idx) => ({
-    id: `${idx + 1}`,
-    title: m.title,
-    deliverable: m.deliverable,
-    amountSol: m.amountSol,
-    dueDate: m.dueDate,
-    escrowStatus: "pending" as const,
-  }));
 
   d.agreement = {
-    projectTitle: draft.projectTitle,
-    scopeSummary: draft.scopeSummary,
-    startDate: draft.startDate,
-    targetDate: draft.targetDate,
-    notes: draft.notes,
-    milestones,
+    serviceType: draft.serviceType,
+    scopeDetails: draft.scopeDetails,
+    timeline: draft.timeline,
+    totalCostSol: draft.totalCostSol,
     lastEditedBy: role,
     lastEditedAt: now,
     lockedBy: null,
@@ -480,18 +455,14 @@ export function saveDraftAgreement(
   d.messages.push({
     id: randomUUID(),
     authorRole: "system",
-    body: `${who} updated the agreement draft.`,
+    body: `${who} updated the contract draft.`,
     createdAt: now,
   });
 
   return d;
 }
 
-/**
- * Lock the agreement — freeze all edits, compute fees.
- * Only the party who did NOT last edit can lock (prevents last-minute self-lock).
- * Or the same party can lock if they are the only editor so far.
- */
+/** Lock the agreement — freeze all edits, compute fees. */
 export function lockAgreement(
   dealId: string,
   role: "buyer" | "provider",
@@ -500,12 +471,11 @@ export function lockAgreement(
   if (!d) return { error: "not found" };
   if (d.status !== "drafting") return { error: "nothing to lock" };
   if (!d.agreement) return { error: "no draft agreement" };
-  if (d.agreement.milestones.length === 0) return { error: "add at least one milestone" };
+  if (d.agreement.totalCostSol <= 0) return { error: "total cost must be greater than 0" };
   if (d.agreement.lockedAt) return { error: "already locked" };
 
   const now = new Date().toISOString();
-  const amounts = d.agreement.milestones.map((m) => m.amountSol);
-  const fb = computeFeeBreakdown(amounts);
+  const fb = computeFeeBreakdown([d.agreement.totalCostSol]);
 
   d.agreement.lockedBy = role;
   d.agreement.lockedAt = now;
@@ -523,7 +493,7 @@ export function lockAgreement(
   d.messages.push({
     id: randomUUID(),
     authorRole: "system",
-    body: `${who} locked the agreement. Both parties must now sign to activate.`,
+    body: `${who} locked the contract. Both parties must now sign to activate.`,
     createdAt: now,
   });
 
@@ -596,40 +566,6 @@ export function signAgreement(
       authorRole: "system",
       body: `${who} signed the agreement. Waiting for the other party.`,
       createdAt: now,
-    });
-  }
-
-  return d;
-}
-
-/** Update a milestone's escrow status. */
-export function updateMilestoneEscrow(
-  dealId: string,
-  milestoneId: string,
-  escrowStatus: MilestoneEscrowStatus,
-): DealThread | { error: string } {
-  const d = getDealThreadById(dealId);
-  if (!d) return { error: "not found" };
-  if (d.status !== "active" && d.status !== "disputed")
-    return { error: "deal must be active" };
-  if (!d.agreement) return { error: "no agreement" };
-
-  const m = d.agreement.milestones.find((ms) => ms.id === milestoneId);
-  if (!m) return { error: "milestone not found" };
-
-  m.escrowStatus = escrowStatus;
-  d.updatedAt = new Date().toISOString();
-
-  const allReleased = d.agreement.milestones.every(
-    (ms) => ms.escrowStatus === "released",
-  );
-  if (allReleased) {
-    d.status = "completed";
-    d.messages.push({
-      id: randomUUID(),
-      authorRole: "system",
-      body: "All milestones released. Engagement complete.",
-      createdAt: d.updatedAt,
     });
   }
 

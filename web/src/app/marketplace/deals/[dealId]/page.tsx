@@ -14,7 +14,7 @@ type DealApi = {
 
 const STATUS_LABELS: Record<string, string> = {
   open: "Open",
-  drafting: "Drafting Agreement",
+  drafting: "Drafting Contract",
   locked: "Locked — Awaiting Signatures",
   active: "Active",
   completed: "Completed",
@@ -30,20 +30,6 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-emerald-500/25 text-emerald-200",
   disputed: "bg-red-500/15 text-red-300",
   cancelled: "bg-zinc-500/15 text-zinc-500",
-};
-
-const ESCROW_LABELS: Record<string, string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  released: "Released",
-  disputed: "Disputed",
-};
-
-const ESCROW_COLORS: Record<string, string> = {
-  pending: "bg-zinc-700 text-zinc-300",
-  in_progress: "bg-amber-500/20 text-amber-300",
-  released: "bg-emerald-500/20 text-emerald-300",
-  disputed: "bg-red-500/20 text-red-300",
 };
 
 export default function DealThreadPage() {
@@ -106,9 +92,8 @@ export default function DealThreadPage() {
   }
 
   const canChat = deal && deal.status !== "cancelled" && deal.status !== "completed";
-  const showAgreementBanner = deal && deal.status !== "cancelled";
+  const showBanner = deal && deal.status !== "cancelled";
 
-  // Payment prompt: both signed, deal active, buyer role
   const needsFunding =
     deal?.status === "active" &&
     deal.agreement?.buyerSignedAt &&
@@ -119,7 +104,7 @@ export default function DealThreadPage() {
     <div className="min-w-0 space-y-8 sm:space-y-10">
       <section className="polish-surface-page max-w-full min-w-0 rounded-3xl bg-zinc-950/52 p-4 sm:p-6 md:p-8">
         <PageHeader label="Marketplace" title="Deal workspace"
-          description="Chat with your counterpart. Draft, lock, and sign the agreement when ready." />
+          description="Chat with your counterpart. Draft, lock, and sign the contract when ready." />
         <Link href="/marketplace/deals"
           className="mt-4 inline-block text-sm text-zinc-400 underline decoration-white/20 underline-offset-4 hover:text-zinc-200">
           ← All deal chats
@@ -142,8 +127,8 @@ export default function DealThreadPage() {
               </div>
             </div>
 
-            {/* Agreement banner */}
-            {showAgreementBanner ? (
+            {/* Contract banner */}
+            {showBanner ? (
               <div className={`rounded-xl border p-4 ${
                 deal.status === "active" || deal.status === "completed"
                   ? "border-emerald-500/20 bg-emerald-500/5"
@@ -154,27 +139,23 @@ export default function DealThreadPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className={`text-sm font-medium ${
-                      deal.status === "active" || deal.status === "completed"
-                        ? "text-emerald-200"
-                        : deal.status === "locked"
-                          ? "text-amber-200"
-                          : "text-zinc-300"
+                      deal.status === "active" || deal.status === "completed" ? "text-emerald-200"
+                        : deal.status === "locked" ? "text-amber-200" : "text-zinc-300"
                     }`}>
-                      {deal.status === "open" && "No agreement drafted yet"}
-                      {deal.status === "drafting" && "Agreement being drafted"}
-                      {deal.status === "locked" && "Agreement locked — review and sign"}
-                      {deal.status === "active" && "Agreement signed — work in progress"}
+                      {deal.status === "open" && "No contract drafted yet"}
+                      {deal.status === "drafting" && "Contract being drafted"}
+                      {deal.status === "locked" && "Contract locked — review and sign"}
+                      {deal.status === "active" && "Contract signed — work in progress"}
                       {deal.status === "completed" && "Engagement complete"}
                       {deal.status === "disputed" && "Dispute in progress"}
                     </p>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      {deal.status === "open" && "Discuss terms in chat, then open the agreement to draft milestones."}
+                      {deal.status === "open" && "Discuss terms in chat, then open the contract to draft details."}
                       {deal.status === "drafting" && "Either party can edit. Lock when you're both happy with the terms."}
                       {deal.status === "locked" && "No more edits. Both parties must sign, or unlock to make changes."}
-                      {deal.status === "active" && "Milestones are tracked below."}
+                      {deal.status === "active" && "Payment held in escrow until both confirm completion."}
                     </p>
 
-                    {/* Signature dots */}
                     {deal.agreement && (deal.status === "locked" || deal.status === "active") && (
                       <div className="mt-2 flex gap-4 text-xs">
                         <span className="flex items-center gap-1">
@@ -190,18 +171,15 @@ export default function DealThreadPage() {
                   </div>
                   <button type="button" onClick={() => setShowAgreement(true)}
                     className={`rounded-lg border px-4 py-2 text-xs font-medium ${
-                      deal.status === "open"
-                        ? "border-white/20 text-zinc-300 hover:bg-zinc-900"
-                        : deal.status === "locked"
-                          ? "border-amber-500/30 bg-amber-500/15 text-amber-100"
-                          : deal.status === "active" || deal.status === "completed"
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-                            : "border-white/20 text-zinc-300 hover:bg-zinc-900"
+                      deal.status === "open" ? "border-white/20 text-zinc-300 hover:bg-zinc-900"
+                        : deal.status === "locked" ? "border-amber-500/30 bg-amber-500/15 text-amber-100"
+                        : deal.status === "active" || deal.status === "completed" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                        : "border-white/20 text-zinc-300 hover:bg-zinc-900"
                     }`}>
-                    {deal.status === "open" ? "Draft Agreement" :
-                     deal.status === "drafting" ? "Edit Agreement" :
-                     deal.status === "locked" ? "Review & Sign" :
-                     "View Agreement"}
+                    {deal.status === "open" ? "Draft Contract"
+                      : deal.status === "drafting" ? "Edit Contract"
+                      : deal.status === "locked" ? "Review & Sign"
+                      : "View Contract"}
                   </button>
                 </div>
               </div>
@@ -222,23 +200,12 @@ export default function DealThreadPage() {
               </div>
             )}
 
-            {/* Escrow tracker */}
-            {(deal.status === "active" || deal.status === "completed" || deal.status === "disputed") && deal.agreement?.milestones?.length ? (
-              <div className="rounded-xl border border-white/[0.08] bg-zinc-950/45 p-4">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">Escrow Tracker</p>
-                <div className="space-y-2">
-                  {deal.agreement.milestones.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-zinc-900/50 px-3 py-2">
-                      <div>
-                        <p className="text-xs font-medium text-zinc-200">{m.title}</p>
-                        <p className="text-[11px] text-zinc-500">{m.amountSol.toFixed(2)} SOL</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${ESCROW_COLORS[m.escrowStatus] ?? "bg-zinc-700 text-zinc-300"}`}>
-                        {ESCROW_LABELS[m.escrowStatus] ?? "Pending"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            {/* Contract summary (when active/completed) */}
+            {(deal.status === "active" || deal.status === "completed") && deal.agreement ? (
+              <div className="rounded-xl border border-white/[0.08] bg-zinc-950/45 p-4 space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Contract Summary</p>
+                <p className="text-sm text-zinc-300"><span className="text-zinc-500">Service:</span> {deal.agreement.serviceType}</p>
+                <p className="text-sm text-zinc-300"><span className="text-zinc-500">Cost:</span> {deal.agreement.totalCostSol.toFixed(2)} SOL (in escrow)</p>
               </div>
             ) : null}
 
@@ -250,9 +217,9 @@ export default function DealThreadPage() {
                   <div className={bubbleClass(m.authorRole)}>
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
                     <p className="mt-2 text-[0.65rem] uppercase tracking-wider text-zinc-500">
-                      {m.authorRole === "buyer" ? "Buyer" :
-                       m.authorRole === "provider" ? "Provider" :
-                       m.authorRole === "operator" ? "1ST0P" : "System"}{" "}
+                      {m.authorRole === "buyer" ? "Buyer"
+                        : m.authorRole === "provider" ? "Provider"
+                        : m.authorRole === "operator" ? "1ST0P" : "System"}{" "}
                       · {new Date(m.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -281,13 +248,14 @@ export default function DealThreadPage() {
         ) : null}
       </section>
 
-      {/* Agreement modal */}
+      {/* Contract modal */}
       {showAgreement && deal && role ? (
         <AgreementModal
           dealId={dealId}
           agreement={deal.agreement}
           dealStatus={deal.status}
           participantRole={role}
+          serviceName={deal.serviceName}
           onClose={() => setShowAgreement(false)}
           onUpdated={() => {
             setShowAgreement(false);

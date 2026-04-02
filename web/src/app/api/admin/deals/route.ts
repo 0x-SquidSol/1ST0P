@@ -22,9 +22,8 @@ export async function GET() {
     buyerWallet: shortenWallet(d.buyerWallet, 6),
     providerWallet: shortenWallet(d.providerWallet, 6),
     status: d.status,
-    projectTitle: d.agreement?.projectTitle ?? "(no agreement yet)",
-    milestoneCount: d.agreement?.milestones?.length ?? 0,
-    totalSol: d.agreement?.milestones?.reduce((a, m) => a + m.amountSol, 0) ?? 0,
+    serviceType: d.agreement?.serviceType ?? "(no contract yet)",
+    totalSol: d.agreement?.totalCostSol ?? 0,
     agreementSigned:
       !!(d.agreement?.buyerSignedAt && d.agreement?.providerSignedAt),
     locked: !!d.agreement?.lockedAt,
