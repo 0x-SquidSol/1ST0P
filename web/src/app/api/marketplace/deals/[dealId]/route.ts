@@ -6,6 +6,7 @@ import {
 } from "@/lib/messages-session-cookie";
 import {
   getDealThreadById,
+  markDealComplete,
   resolveDisplayName,
   setDealStatus,
 } from "@/lib/dev-marketplace-store";
@@ -71,6 +72,18 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     return NextResponse.json({
       deal: getDealThreadById(dealId),
       participantRole: deal.buyerWallet === session.wallet ? "buyer" : "provider",
+    });
+  }
+
+  if (json.action === "mark_complete") {
+    const role = deal.buyerWallet === session.wallet ? "buyer" : "provider";
+    const result = markDealComplete(dealId, role);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 422 });
+    }
+    return NextResponse.json({
+      deal: getDealThreadById(dealId),
+      participantRole: role,
     });
   }
 

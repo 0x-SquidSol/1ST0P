@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"applications" | "pending" | "contracts" | "pending_payment" | "completed">("applications");
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
 
   const refreshApps = useCallback(async () => {
     setLoadErr(null);
@@ -142,6 +143,25 @@ export default function AdminPage() {
       await refreshApps();
     } finally {
       setActionId(null);
+    }
+  }
+
+  async function releasePayout(dealId: string) {
+    setReleasingId(dealId);
+    setLoadErr(null);
+    try {
+      const res = await fetch(`/api/admin/deals/${dealId}/release`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setLoadErr(data.error ?? "Release failed.");
+        return;
+      }
+      await refreshDeals();
+    } finally {
+      setReleasingId(null);
     }
   }
 
@@ -547,7 +567,7 @@ export default function AdminPage() {
                     <th className="p-3 font-medium">Provider</th>
                     <th className="p-3 font-medium">Buyer</th>
                     <th className="p-3 font-medium">SOL</th>
-                    <th className="p-3 font-medium">Last update</th>
+                    <th className="p-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -564,7 +584,16 @@ export default function AdminPage() {
                       </td>
                       <td className="p-3 font-mono text-xs text-zinc-500">{d.buyerWallet}</td>
                       <td className="p-3 text-xs text-zinc-300">{d.totalSol.toFixed(2)}</td>
-                      <td className="p-3 text-xs text-zinc-500">{new Date(d.updatedAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <button
+                          type="button"
+                          disabled={releasingId === d.id}
+                          onClick={() => void releasePayout(d.id)}
+                          className="rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200 disabled:opacity-40 hover:bg-emerald-500/20"
+                        >
+                          {releasingId === d.id ? "Releasing…" : "Release Payment"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

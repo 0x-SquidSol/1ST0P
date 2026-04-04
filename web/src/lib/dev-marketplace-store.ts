@@ -105,6 +105,11 @@ export type DealThread = {
   providerWallet: string;
   status: DealStatus;
   agreement: DealAgreement | null;
+  /** Dual check-off: both must confirm before admin can release payment. */
+  buyerCompletedAt: string | null;
+  providerCompletedAt: string | null;
+  /** Admin releases payment → deal completed. */
+  payoutReleasedAt: string | null;
   messages: DealMessage[];
   createdAt: string;
   updatedAt: string;
@@ -449,11 +454,14 @@ export function createDealThread(input: {
     providerWallet: input.providerWallet,
     status: "open",
     agreement: null,
+    buyerCompletedAt: null,
+    providerCompletedAt: null,
+    payoutReleasedAt: null,
     messages: [
       {
         id: randomUUID(),
         authorRole: "system",
-        body: "Deal chat started. Discuss the scope and terms here, then open the agreement to draft milestones and lock it in.",
+        body: "Deal chat started. Discuss the scope and terms here, then open the contract to draft terms and lock it in.",
         createdAt: now,
       },
     ],
@@ -693,6 +701,86 @@ export function signAgreement(
 /** List all deals (admin dashboard). */
 export function listAllDeals(): DealThread[] {
   return [...deals()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+}
+
+/* ------------------------------------------------------------------ */
+/*  Dual check-off + admin payout                                      */
+/* ------------------------------------------------------------------ */
+
+/** Buyer or provider marks the deal as complete from their side. */
+export function markDealComplete(
+  dealId: string,
+  role: "buyer" | "provider",
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "active") return { error: "deal must be active" };
+
+  const now = new Date().toISOString();
+  const who = role === "buyer" ? "Buyer" : "Provider";
+
+  if (role === "buyer") {
+    if (d.buyerCompletedAt) return { error: "buyer already confirmed completion" };
+    d.buyerCompletedAt = now;
+  } else {
+    if (d.providerCompletedAt) return { error: "provider already confirmed completion" };
+    d.providerCompletedAt = now;
+  }
+  d.updatedAt = now;
+
+  // Both confirmed → move to pending_payment for admin review
+  if (d.buyerCompletedAt && d.providerCompletedAt) {
+    d.status = "pending_payment";
+    d.messages.push({
+      id: randomUUID(),
+      authorRole: "system",
+      body: `${who} confirmed completion. Both parties agree the work is done. Awaiting admin review and payment release.`,
+      createdAt: now,
+    });
+  } else {
+    d.messages.push({
+      id: randomUUID(),
+      authorRole: "system",
+      body: `${who} confirmed the work is complete. Waiting for the other party to confirm.`,
+      createdAt: now,
+    });
+  }
+
+  flush();
+  return d;
+}
+
+/** Admin releases payment → deal moves to completed. */
+export function adminReleasePayout(
+  dealId: string,
+): DealThread | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "pending_payment")
+    return { error: "deal must be in pending_payment status" };
+  if (!d.buyerCompletedAt || !d.providerCompletedAt)
+    return { error: "both parties must confirm completion first" };
+
+  const now = new Date().toISOString();
+  d.payoutReleasedAt = now;
+  d.status = "completed";
+  d.updatedAt = now;
+
+  const payout = d.agreement?.feeSnapshot
+    ? d.agreement.totalCostSol -
+      d.agreement.feeSnapshot.platformFeeSol -
+      d.agreement.feeSnapshot.totalReleaseFeeSol
+    : d.agreement?.totalCostSol ?? 0;
+
+  d.messages.push({
+    id: randomUUID(),
+    authorRole: "system",
+    body: `Admin released payment. Provider receives ${payout.toFixed(4)} SOL (after fees). This engagement is now complete.`,
+    createdAt: now,
+  });
+
+  flush();
+  return d;
 }
 
 /* ------------------------------------------------------------------ */

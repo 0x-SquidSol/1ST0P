@@ -96,6 +96,8 @@ export default function DealThreadPage() {
     return "mx-auto max-w-[min(100%,34rem)] rounded-2xl border border-white/10 bg-zinc-900/60 px-4 py-2 text-center text-sm text-zinc-400";
   }
 
+  const [completeBusy, setCompleteBusy] = useState(false);
+
   const canChat = deal && deal.status !== "cancelled" && deal.status !== "completed";
   const showBanner = deal && deal.status !== "cancelled";
 
@@ -104,6 +106,34 @@ export default function DealThreadPage() {
     deal.agreement?.buyerSignedAt &&
     deal.agreement?.providerSignedAt &&
     role === "buyer";
+
+  const myCompleted =
+    role === "buyer" ? !!deal?.buyerCompletedAt : !!deal?.providerCompletedAt;
+  const otherCompleted =
+    role === "buyer" ? !!deal?.providerCompletedAt : !!deal?.buyerCompletedAt;
+  const showCompletionPanel = deal?.status === "active" || deal?.status === "pending_payment";
+
+  async function markComplete() {
+    if (!dealId) return;
+    setCompleteBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/marketplace/deals/${dealId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mark_complete" }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        setErr(j.error ?? "Could not mark complete.");
+        return;
+      }
+      void load();
+    } finally {
+      setCompleteBusy(false);
+    }
+  }
 
   return (
     <div className="min-w-0 space-y-8 sm:space-y-10">
@@ -205,14 +235,69 @@ export default function DealThreadPage() {
               </div>
             )}
 
-            {/* Contract summary (when active/completed) */}
-            {(deal.status === "active" || deal.status === "completed") && deal.agreement ? (
+            {/* Contract summary (when active/completed/pending_payment) */}
+            {(deal.status === "active" || deal.status === "pending_payment" || deal.status === "completed") && deal.agreement ? (
               <div className="rounded-xl border border-white/[0.08] bg-zinc-950/45 p-4 space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Contract Summary</p>
                 <p className="text-sm text-zinc-300"><span className="text-zinc-500">Service:</span> {deal.agreement.serviceType}</p>
                 <p className="text-sm text-zinc-300"><span className="text-zinc-500">Cost:</span> {deal.agreement.totalCostSol.toFixed(2)} SOL (in escrow)</p>
               </div>
             ) : null}
+
+            {/* Completion check-off panel */}
+            {showCompletionPanel && (
+              <div className={`rounded-xl border p-4 ${
+                deal.status === "pending_payment"
+                  ? "border-emerald-500/20 bg-emerald-500/5"
+                  : "border-white/[0.08] bg-zinc-950/45"
+              }`}>
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  {deal.status === "pending_payment" ? "Awaiting Admin Payout" : "Completion Check-off"}
+                </p>
+
+                <div className="flex gap-4 text-sm mb-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className={`h-2.5 w-2.5 rounded-full ${deal.buyerCompletedAt ? "bg-emerald-500" : "bg-zinc-700"}`} />
+                    <span className="text-zinc-300">Buyer</span>
+                    <span className="text-xs text-zinc-600">{deal.buyerCompletedAt ? "Confirmed" : "Pending"}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`h-2.5 w-2.5 rounded-full ${deal.providerCompletedAt ? "bg-emerald-500" : "bg-zinc-700"}`} />
+                    <span className="text-zinc-300">Provider</span>
+                    <span className="text-xs text-zinc-600">{deal.providerCompletedAt ? "Confirmed" : "Pending"}</span>
+                  </span>
+                </div>
+
+                {deal.status === "active" && !myCompleted && (
+                  <button
+                    type="button"
+                    onClick={() => void markComplete()}
+                    disabled={completeBusy}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-emerald-500/20 disabled:opacity-40 hover:bg-emerald-500"
+                  >
+                    {completeBusy ? "Confirming…" : "Mark as Complete"}
+                  </button>
+                )}
+
+                {deal.status === "active" && myCompleted && !otherCompleted && (
+                  <p className="text-sm text-zinc-400">
+                    You confirmed completion. Waiting for the other party.
+                  </p>
+                )}
+
+                {deal.status === "pending_payment" && (
+                  <p className="text-sm text-emerald-300">
+                    Both parties confirmed. Admin will review and release payment.
+                  </p>
+                )}
+
+                {deal.status === "completed" && deal.payoutReleasedAt && (
+                  <p className="text-sm text-emerald-300">
+                    Payment released. Engagement complete.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Chat messages */}
             <ul className="flex min-h-[12rem] flex-col gap-3">
