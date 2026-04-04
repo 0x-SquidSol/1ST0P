@@ -61,6 +61,29 @@ export function ProviderReputationPanel({
     };
   }, [bump]);
 
+  // Fetch deal-based reviews from server and merge into localStorage
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch(`/api/profile/reviews?provider=${encodeURIComponent(providerSlug)}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { reviews: MarketplaceReview[] };
+        if (!data.reviews.length) return;
+        // Merge into localStorage (skip duplicates by id)
+        const existing = mergedReviewsForProvider(providerSlug);
+        const existingIds = new Set(existing.map((r) => r.id));
+        let added = false;
+        for (const r of data.reviews) {
+          if (!existingIds.has(r.id)) {
+            appendUserReview({ ...r, reviewerWallet: "deal-review", unsigned: true });
+            added = true;
+          }
+        }
+        if (added) bump();
+      } catch { /* ignore */ }
+    })();
+  }, [providerSlug, bump]);
+
   const reviews = useMemo(() => {
     void version;
     return mergedReviewsForProvider(providerSlug);

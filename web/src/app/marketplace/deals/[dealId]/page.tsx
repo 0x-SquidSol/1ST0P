@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { DealThread } from "@/lib/dev-marketplace-store";
 import { PageHeader } from "@/components/PageHeader";
 import { AgreementModal } from "@/components/AgreementModal";
+import { ReviewModal } from "@/components/ReviewModal";
 
 type DealApi = {
   deal: DealThread;
@@ -46,6 +47,7 @@ export default function DealThreadPage() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [names, setNames] = useState<{ buyer: string; provider: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -268,7 +270,17 @@ export default function DealThreadPage() {
                   </span>
                 </div>
 
-                {deal.status === "active" && !myCompleted && (
+                {deal.status === "active" && !myCompleted && role === "buyer" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReview(true)}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-500"
+                  >
+                    Review & Complete
+                  </button>
+                )}
+
+                {deal.status === "active" && !myCompleted && role === "provider" && (
                   <button
                     type="button"
                     onClick={() => void markComplete()}
@@ -349,6 +361,20 @@ export default function DealThreadPage() {
           onClose={() => setShowAgreement(false)}
           onUpdated={() => {
             setShowAgreement(false);
+            void load();
+          }}
+        />
+      ) : null}
+
+      {/* Review modal (buyer only) */}
+      {showReview && deal && role === "buyer" ? (
+        <ReviewModal
+          dealId={dealId}
+          providerName={deal.providerDisplayName}
+          serviceName={deal.agreement?.serviceType ?? deal.serviceName}
+          onClose={() => setShowReview(false)}
+          onSubmitted={() => {
+            setShowReview(false);
             void load();
           }}
         />

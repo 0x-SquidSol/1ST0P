@@ -110,6 +110,8 @@ export type DealThread = {
   providerCompletedAt: string | null;
   /** Admin releases payment → deal completed. */
   payoutReleasedAt: string | null;
+  /** ID of the mandatory buyer review (set when buyer marks complete). */
+  reviewId: string | null;
   messages: DealMessage[];
   createdAt: string;
   updatedAt: string;
@@ -122,6 +124,17 @@ export type StoredApplication = {
   reviewStatus: ApplicationReviewStatus;
   publicSlug?: string;
   approvedAt?: string;
+};
+
+export type DealReview = {
+  id: string;
+  dealId: string;
+  providerSlug: string;
+  serviceName: string;
+  buyerWallet: string;
+  rating: number;
+  text: string;
+  createdAt: string;
 };
 
 export type UserProfile = {
@@ -144,6 +157,7 @@ const APPS_FILE = tmpPath("apps.json");
 const THREADS_FILE = tmpPath("threads.json");
 const PROFILES_FILE = tmpPath("profiles.json");
 const USERS_FILE = tmpPath("users.json");
+const REVIEWS_FILE = tmpPath("reviews.json");
 
 function readJsonFile<T>(filePath: string): T | null {
   if (!isServer) return null;
@@ -176,6 +190,7 @@ const g = globalThis as unknown as {
   __1st0pApprovedProfiles?: ProviderProfile[];
   __1st0pDeals?: DealThread[];
   __1st0pUsers?: UserProfile[];
+  __1st0pReviews?: DealReview[];
 };
 
 function applications(): StoredApplication[] {
@@ -214,6 +229,13 @@ function users(): UserProfile[] {
   return g.__1st0pUsers;
 }
 
+function reviews(): DealReview[] {
+  const fromDisk = readJsonFile<DealReview[]>(REVIEWS_FILE);
+  if (fromDisk) { g.__1st0pReviews = fromDisk; }
+  if (!g.__1st0pReviews) g.__1st0pReviews = [];
+  return g.__1st0pReviews;
+}
+
 /** Flush all in-memory state to /tmp after every mutation. */
 function flush() {
   writeJsonFile(DEALS_FILE, g.__1st0pDeals ?? []);
@@ -221,6 +243,7 @@ function flush() {
   writeJsonFile(THREADS_FILE, g.__1st0pThreads ?? []);
   writeJsonFile(PROFILES_FILE, g.__1st0pApprovedProfiles ?? []);
   writeJsonFile(USERS_FILE, g.__1st0pUsers ?? []);
+  writeJsonFile(REVIEWS_FILE, g.__1st0pReviews ?? []);
 }
 
 export function listApprovedApplicationProfiles(): ProviderProfile[] {
@@ -457,6 +480,7 @@ export function createDealThread(input: {
     buyerCompletedAt: null,
     providerCompletedAt: null,
     payoutReleasedAt: null,
+    reviewId: null,
     messages: [
       {
         id: randomUUID(),
@@ -748,6 +772,82 @@ export function markDealComplete(
 
   flush();
   return d;
+}
+
+/**
+ * Submit a mandatory buyer review AND mark buyer complete in one step.
+ * Buyer cannot mark complete without leaving a review.
+ */
+export function submitDealReview(
+  dealId: string,
+  buyerWallet: string,
+  rating: number,
+  text: string,
+): { review: DealReview; deal: DealThread } | { error: string } {
+  const d = getDealThreadById(dealId);
+  if (!d) return { error: "not found" };
+  if (d.status !== "active") return { error: "deal must be active" };
+  if (d.buyerWallet !== buyerWallet) return { error: "only the buyer can review" };
+  if (d.buyerCompletedAt) return { error: "buyer already completed" };
+  if (d.reviewId) return { error: "review already submitted" };
+  if (rating < 1 || rating > 5) return { error: "rating must be 1-5" };
+  if (text.trim().length < 50) return { error: "review must be at least 50 characters" };
+
+  const now = new Date().toISOString();
+  const reviewId = randomUUID();
+
+  const review: DealReview = {
+    id: reviewId,
+    dealId,
+    providerSlug: d.providerSlug,
+    serviceName: d.agreement?.serviceType ?? d.serviceName,
+    buyerWallet,
+    rating,
+    text: text.trim(),
+    createdAt: now,
+  };
+  reviews().push(review);
+
+  // Mark buyer complete
+  d.reviewId = reviewId;
+  d.buyerCompletedAt = now;
+  d.updatedAt = now;
+
+  // Check if both are now complete
+  if (d.providerCompletedAt) {
+    d.status = "pending_payment";
+    d.messages.push({
+      id: randomUUID(),
+      authorRole: "system",
+      body: "Buyer submitted a review and confirmed completion. Both parties agree — awaiting admin payment release.",
+      createdAt: now,
+    });
+  } else {
+    d.messages.push({
+      id: randomUUID(),
+      authorRole: "system",
+      body: `Buyer submitted a ${rating}-star review and confirmed completion. Waiting for provider to confirm.`,
+      createdAt: now,
+    });
+  }
+
+  flush();
+  return { review, deal: d };
+}
+
+/** Get all reviews for a provider (server-side, from /tmp store). */
+export function getReviewsForProvider(providerSlug: string): DealReview[] {
+  return reviews().filter((r) => r.providerSlug === providerSlug);
+}
+
+/** Get all reviews for a provider + service (server-side). */
+export function getReviewsForProviderService(
+  providerSlug: string,
+  serviceName: string,
+): DealReview[] {
+  return reviews().filter(
+    (r) => r.providerSlug === providerSlug && r.serviceName === serviceName,
+  );
 }
 
 /** Admin releases payment → deal moves to completed. */
