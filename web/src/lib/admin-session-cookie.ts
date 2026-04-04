@@ -13,10 +13,10 @@ function signingSecret(): string {
   const m = process.env.MESSAGES_SESSION_SECRET?.trim();
   if (m && m.length >= 16) return m;
   if (process.env.NODE_ENV === "development") {
-    return "dev-admin-cookie-signing-secret-16b";
+    return "__dev_only_admin_signing_secret__";
   }
   throw new Error(
-    "Set ADMIN_SESSION_SECRET or MESSAGES_SESSION_SECRET (≥16 chars) in production",
+    "Set ADMIN_SESSION_SECRET or MESSAGES_SESSION_SECRET (≥16 chars) in environment variables.",
   );
 }
 

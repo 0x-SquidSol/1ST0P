@@ -18,7 +18,7 @@ const bodySchema = z.object({
   signature: z.string().min(32).max(200),
 });
 
-const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
+const SESSION_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 export async function POST(req: Request) {
   let json: unknown;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { sanitizeText } from "@/lib/sanitize";
 import {
   APPLICANT_SESSION_COOKIE,
   readApplicantSession,
@@ -65,7 +66,13 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid draft" }, { status: 422 });
     }
-    const result = saveDraftAgreement(dealId, role, parsed.data);
+    const sanitized = {
+      ...parsed.data,
+      serviceType: sanitizeText(parsed.data.serviceType),
+      scopeDetails: sanitizeText(parsed.data.scopeDetails),
+      timeline: sanitizeText(parsed.data.timeline),
+    };
+    const result = saveDraftAgreement(dealId, role, sanitized);
     if ("error" in result) {
       return NextResponse.json({ error: result.error }, { status: 422 });
     }
@@ -86,7 +93,13 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid draft" }, { status: 422 });
     }
-    const saveResult = saveDraftAgreement(dealId, role, parsed.data);
+    const sanitized = {
+      ...parsed.data,
+      serviceType: sanitizeText(parsed.data.serviceType),
+      scopeDetails: sanitizeText(parsed.data.scopeDetails),
+      timeline: sanitizeText(parsed.data.timeline),
+    };
+    const saveResult = saveDraftAgreement(dealId, role, sanitized);
     if ("error" in saveResult) {
       return NextResponse.json({ error: saveResult.error }, { status: 422 });
     }

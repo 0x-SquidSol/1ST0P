@@ -11,7 +11,7 @@ const bodySchema = z.object({
   secret: z.string().min(1).max(200),
 });
 
-const SESSION_MS = 12 * 60 * 60 * 1000;
+const SESSION_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 export async function POST(req: Request) {
   let json: unknown;

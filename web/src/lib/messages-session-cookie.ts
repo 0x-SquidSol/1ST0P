@@ -17,9 +17,11 @@ function sessionSecret(): string {
   const s = process.env.MESSAGES_SESSION_SECRET?.trim();
   if (s && s.length >= 16) return s;
   if (process.env.NODE_ENV === "development") {
-    return "dev-messages-session-secret-min-16-chars";
+    // Dev-only fallback — deterministic but never used in production.
+    // Production MUST set MESSAGES_SESSION_SECRET (≥16 chars).
+    return "__dev_only_session_secret_not_for_prod__";
   }
-  throw new Error("MESSAGES_SESSION_SECRET is required in production");
+  throw new Error("MESSAGES_SESSION_SECRET is required (≥16 chars). Set it in environment variables.");
 }
 
 function seal(json: string): string {
@@ -107,14 +109,15 @@ export function readOperatorSession(
 
 export function operatorSecretOk(secret: string): boolean {
   const expected = process.env.MESSAGES_OPERATOR_SECRET?.trim();
-  if (expected && expected.length >= 8) {
+  if (expected && expected.length >= 16) {
+    if (secret.length !== expected.length) return false;
     return timingSafeEqual(
       Buffer.from(secret, "utf8"),
       Buffer.from(expected, "utf8"),
     );
   }
   if (process.env.NODE_ENV === "development") {
-    return secret === "dev-operator";
+    return secret === "__dev_only_operator__";
   }
   return false;
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { sanitizeText } from "@/lib/sanitize";
 import {
   APPLICANT_SESSION_COOKIE,
   readApplicantSession,
@@ -57,7 +58,7 @@ export async function POST(req: Request, ctx: RouteCtx) {
     return NextResponse.json({ error: "Invalid body" }, { status: 422 });
   }
 
-  const msg = appendMessage(threadId, "applicant", parsed.data.body);
+  const msg = appendMessage(threadId, "applicant", sanitizeText(parsed.data.body));
   if (!msg) {
     return NextResponse.json(
       { error: "Thread closed or missing" },

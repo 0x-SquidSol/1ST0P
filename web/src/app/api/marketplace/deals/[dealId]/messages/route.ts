@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { sanitizeText } from "@/lib/sanitize";
 import {
   APPLICANT_SESSION_COOKIE,
   readApplicantSession,
@@ -40,7 +41,7 @@ export async function POST(req: Request, ctx: RouteCtx) {
   }
 
   const role = deal.buyerWallet === session.wallet ? "buyer" : "provider";
-  const msg = appendDealMessage(dealId, role, parsed.data.body);
+  const msg = appendDealMessage(dealId, role, sanitizeText(parsed.data.body));
   if (!msg) {
     return NextResponse.json({ error: "Missing deal thread" }, { status: 404 });
   }
