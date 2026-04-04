@@ -109,7 +109,7 @@ export function Header() {
       className="polish-header sticky top-0 z-50 overflow-visible border-b border-white/10 bg-zinc-950/70 backdrop-blur-xl"
       aria-label="Site header"
     >
-      <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-2 overflow-visible py-2.5 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:gap-4 sm:px-4 sm:py-4">
+      <div className="mx-auto flex max-w-7xl min-w-0 items-center gap-2 overflow-visible py-2.5 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:gap-3 sm:px-4 sm:py-3">
         <div className="min-w-0 shrink-0">
           <Link
             href="/"
@@ -133,7 +133,7 @@ export function Header() {
         </div>
 
         <nav
-          className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm sm:flex md:gap-2"
+          className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 text-sm sm:flex"
           aria-label="Primary navigation"
         >
           {primaryNav.map((item) => {
@@ -145,7 +145,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`shrink-0 rounded-lg px-3 py-2 transition ${
+                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[13px] transition ${
                   active
                     ? "bg-zinc-800/70 text-zinc-100"
                     : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"
@@ -159,7 +159,7 @@ export function Header() {
             <Link
               href={`/profile/${username}`}
               aria-current={pathname.startsWith("/profile") ? "page" : undefined}
-              className={`shrink-0 rounded-lg px-3 py-2 transition ${
+              className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[13px] transition ${
                 pathname.startsWith("/profile")
                   ? "bg-zinc-800/70 text-zinc-100"
                   : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"
@@ -171,7 +171,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-300 transition hover:text-zinc-100"
+            className="shrink-0 rounded-lg border border-white/10 bg-zinc-900/70 px-2.5 py-1.5 text-[13px] text-zinc-300 transition hover:text-zinc-100"
             aria-expanded={searchOpen}
             aria-controls="global-search-dialog"
             aria-haspopup="dialog"
@@ -180,7 +180,7 @@ export function Header() {
           </button>
         </nav>
 
-        <div className="relative z-[60] flex min-w-0 flex-1 basis-0 items-center justify-end gap-1 overflow-x-hidden sm:flex-none sm:basis-auto sm:gap-2 sm:overflow-x-visible">
+        <div className="relative z-[60] flex min-w-0 shrink-0 items-center justify-end gap-1 overflow-x-hidden sm:gap-1.5 sm:overflow-x-visible">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
@@ -239,18 +239,12 @@ export function Header() {
           </button>
 
           <div className="relative flex min-w-0 max-w-full items-center gap-1 overflow-visible sm:max-w-none sm:gap-2">
-            {username && (
-              <Link
-                href={`/profile/${username}`}
-                className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-200 transition hover:bg-zinc-800/80 hover:text-white sm:flex"
-              >
-                <svg className="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {username}
-              </Link>
-            )}
-            <div className="hidden min-w-0 sm:flex sm:items-center">
+            <div className="hidden min-w-0 items-center gap-1.5 sm:flex">
+              {username && (
+                <span className="rounded-md bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-300">
+                  {username}
+                </span>
+              )}
               <WalletSummary />
             </div>
             {walletUiReady ? (
