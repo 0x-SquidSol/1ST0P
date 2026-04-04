@@ -46,6 +46,7 @@ export function Header() {
   const [walletUiReady, setWalletUiReady] = useState(false);
   const [menuPortalReady, setMenuPortalReady] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [msgCount, setMsgCount] = useState(0);
 
   useEffect(() => {
     setWalletUiReady(true);
@@ -67,6 +68,23 @@ export function Header() {
     }, 1000);
     return () => clearInterval(interval);
   }, [connected, publicKey, username]);
+
+  // Poll for unread message count
+  useEffect(() => {
+    if (!connected || !publicKey) { setMsgCount(0); return; }
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/messages/unread", { credentials: "include" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { count: number };
+        if (!cancelled) setMsgCount(data.count);
+      } catch { /* ignore */ }
+    };
+    void fetchCount();
+    const interval = setInterval(() => void fetchCount(), 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [connected, publicKey]);
 
   useEffect(() => {
     setMenuPortalReady(true);
@@ -240,6 +258,22 @@ export function Header() {
 
           <div className="relative flex min-w-0 max-w-full items-center gap-1 overflow-visible sm:max-w-none sm:gap-2">
             <div className="hidden min-w-0 items-center gap-1.5 sm:flex">
+              {connected && (
+                <Link
+                  href="/marketplace/deals"
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
+                  aria-label={`Messages${msgCount > 0 ? ` (${msgCount})` : ""}`}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                  {msgCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {msgCount > 99 ? "99+" : msgCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               {username && (
                 <span className="rounded-md bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-300">
                   {username}
@@ -295,16 +329,33 @@ export function Header() {
                 </div>
                 <div className="border-b border-white/10 px-3 pb-3 pt-1">
                   {username && (
-                    <Link
-                      href={`/profile/${username}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="mb-2 flex items-center gap-2 rounded-lg bg-zinc-900/50 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800/80"
-                    >
-                      <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {username}
-                    </Link>
+                    <div className="mb-2 flex gap-2">
+                      <Link
+                        href={`/profile/${username}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex flex-1 items-center gap-2 rounded-lg bg-zinc-900/50 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800/80"
+                      >
+                        <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {username}
+                      </Link>
+                      <Link
+                        href="/marketplace/deals"
+                        onClick={() => setMenuOpen(false)}
+                        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
+                        aria-label={`Messages${msgCount > 0 ? ` (${msgCount})` : ""}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        {msgCount > 0 && (
+                          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                            {msgCount > 99 ? "99+" : msgCount}
+                          </span>
+                        )}
+                      </Link>
+                    </div>
                   )}
                   <WalletSummary variant="menu" />
                 </div>
