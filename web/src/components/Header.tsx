@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SearchModal } from "@/components/SearchModal";
@@ -38,14 +39,38 @@ function navLinkClass(active: boolean) {
 
 export function Header() {
   const pathname = usePathname();
+  const { publicKey, connected } = useWallet();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [walletUiReady, setWalletUiReady] = useState(false);
   const [menuPortalReady, setMenuPortalReady] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     setWalletUiReady(true);
   }, []);
+
+  // Fetch username when wallet connects
+  useEffect(() => {
+    if (!connected || !publicKey) {
+      setUsername(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/profile/lookup?wallet=${publicKey.toBase58()}`,
+        );
+        if (!res.ok) { if (!cancelled) setUsername(null); return; }
+        const data = (await res.json()) as { username: string };
+        if (!cancelled) setUsername(data.username);
+      } catch {
+        if (!cancelled) setUsername(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [connected, publicKey]);
 
   useEffect(() => {
     setMenuPortalReady(true);
@@ -205,6 +230,17 @@ export function Header() {
           </button>
 
           <div className="relative flex min-w-0 max-w-full items-center gap-1 overflow-visible sm:max-w-none sm:gap-2">
+            {username && (
+              <Link
+                href={`/profile/${username}`}
+                className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/60 px-2.5 py-1.5 text-xs text-zinc-200 transition hover:bg-zinc-800/80 hover:text-white sm:flex"
+              >
+                <svg className="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {username}
+              </Link>
+            )}
             <div className="hidden min-w-0 sm:flex sm:items-center">
               <WalletSummary />
             </div>
@@ -255,6 +291,18 @@ export function Header() {
                   </button>
                 </div>
                 <div className="border-b border-white/10 px-3 pb-3 pt-1">
+                  {username && (
+                    <Link
+                      href={`/profile/${username}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="mb-2 flex items-center gap-2 rounded-lg bg-zinc-900/50 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800/80"
+                    >
+                      <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {username}
+                    </Link>
+                  )}
                   <WalletSummary variant="menu" />
                 </div>
                 <nav
@@ -284,6 +332,15 @@ export function Header() {
                       </Link>
                     );
                   })}
+                  {username && (
+                    <Link
+                      href={`/profile/${username}`}
+                      className={navLinkClass(pathname.startsWith("/profile"))}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                  )}
                   <p className="mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
                     More
                   </p>
