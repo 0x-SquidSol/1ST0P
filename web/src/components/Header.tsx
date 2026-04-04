@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SearchModal } from "@/components/SearchModal";
 import { WalletSummary } from "@/components/WalletSummary";
+import { getCachedUsername } from "@/lib/username-cache";
 
 const WalletMultiButton = dynamic(
   async () =>
@@ -50,27 +51,22 @@ export function Header() {
     setWalletUiReady(true);
   }, []);
 
-  // Fetch username when wallet connects
+  // Read username from localStorage (instant, survives cold starts)
   useEffect(() => {
     if (!connected || !publicKey) {
       setUsername(null);
       return;
     }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(
-          `/api/profile/lookup?wallet=${publicKey.toBase58()}`,
-        );
-        if (!res.ok) { if (!cancelled) setUsername(null); return; }
-        const data = (await res.json()) as { username: string };
-        if (!cancelled) setUsername(data.username);
-      } catch {
-        if (!cancelled) setUsername(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [connected, publicKey]);
+    const cached = getCachedUsername(publicKey.toBase58());
+    setUsername(cached);
+
+    // Re-check periodically in case UsernameGate just claimed it
+    const interval = setInterval(() => {
+      const fresh = getCachedUsername(publicKey.toBase58());
+      if (fresh && fresh !== username) setUsername(fresh);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [connected, publicKey, username]);
 
   useEffect(() => {
     setMenuPortalReady(true);
@@ -159,6 +155,19 @@ export function Header() {
               </Link>
             );
           })}
+          {username && (
+            <Link
+              href={`/profile/${username}`}
+              aria-current={pathname.startsWith("/profile") ? "page" : undefined}
+              className={`shrink-0 rounded-lg px-3 py-2 transition ${
+                pathname.startsWith("/profile")
+                  ? "bg-zinc-800/70 text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"
+              }`}
+            >
+              Profile
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
